@@ -98,7 +98,7 @@
                       variant="flat"
                       class="px-2 font-weight-bold"
                     >
-                      {{ item.title.toUpperCase() }}
+                      {{ (item.title || '').toUpperCase() }}
                     </v-chip>
                   </template>
                 </v-select>
@@ -258,7 +258,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
 import { SupabaseService } from '../services/SupabaseService'
 import { CONFIG } from '../config/constants'
 

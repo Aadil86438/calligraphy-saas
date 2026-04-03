@@ -252,7 +252,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject } from 'vue'
+import { ref, onMounted, onUnmounted, inject } from 'vue'
 import { SupabaseService } from '../services/SupabaseService'
 import { CONFIG } from '../config/constants'
 
