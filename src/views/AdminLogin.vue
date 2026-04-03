@@ -53,17 +53,20 @@ const loading = ref(false)
 const valid = ref(false)
 const router = useRouter()
 const showMessage = inject('showMessage')
+const setLoading = inject('setLoading')
 
-const handleLogin = async () => {
-  loading.value = true
-  try {
-    await SupabaseService.login(email.value, password.value)
-    showMessage('Login successful!')
-    router.push('/admin')
-  } catch (error) {
-    showMessage(error.message || 'Invalid credentials', 'error')
-  } finally {
-    loading.value = false
-  }
+const handleLogin = () => {
+  setLoading(true)
+  SupabaseService.login(email.value, password.value)
+    .then(() => {
+      showMessage('Welcome back!')
+      router.push('/admin')
+    })
+    .catch((error) => {
+      showMessage(error.message || 'Invalid credentials', 'error')
+    })
+    .finally(() => {
+      setLoading(false)
+    })
 }
 </script>

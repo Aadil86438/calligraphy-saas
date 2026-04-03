@@ -19,6 +19,11 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       {
+        path: '',
+        name: 'AdminOverview',
+        component: () => import('../views/AdminOverview.vue')
+      },
+      {
         path: 'products',
         name: 'ProductManagement',
         component: () => import('../views/ProductManagement.vue')
@@ -37,13 +42,18 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach(async (to, from, next) => {
-  const user = await SupabaseService.getUser()
-  if (to.meta.requiresAuth && !user) {
-    next('/admin/login')
-  } else {
-    next()
-  }
+router.beforeEach((to, from, next) => {
+  SupabaseService.getUser()
+    .then((user) => {
+      if (to.meta.requiresAuth && !user) {
+        next('/admin/login')
+      } else {
+        next()
+      }
+    })
+    .catch(() => {
+      next('/admin/login')
+    })
 })
 
 export default router

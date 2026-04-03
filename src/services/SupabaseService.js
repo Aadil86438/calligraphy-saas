@@ -7,124 +7,154 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export const SupabaseService = {
   // Auth
-  async login(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
-    return data
+  login(email, password) {
+    return supabase.auth.signInWithPassword({ email, password })
+      .then(({ data, error }) => {
+        if (error) throw error
+        return data
+      })
   },
 
-  async logout() {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+  logout() {
+    return supabase.auth.signOut()
+      .then(({ error }) => {
+        if (error) throw error
+      })
   },
 
-  async getUser() {
-    const { data: { user } } = await supabase.auth.getUser()
-    return user
+  getUser() {
+    return supabase.auth.getUser()
+      .then(({ data: { user } }) => {
+        return user
+      })
   },
 
   // Products
-  async getProducts() {
-    const { data, error } = await supabase
+  getProducts() {
+    return supabase
       .from('products')
       .select('*')
       .eq('is_active', true)
       .order('created_at', { ascending: false })
-    if (error) throw error
-    return data
+      .then(({ data, error }) => {
+        if (error) throw error
+        return data
+      })
   },
 
-  async getAllProducts() {
-    const { data, error } = await supabase
+  getAllProducts() {
+    return supabase
       .from('products')
       .select('*')
       .order('created_at', { ascending: false })
-    if (error) throw error
-    return data
+      .then(({ data, error }) => {
+        if (error) throw error
+        return data
+      })
   },
 
-  async createProduct(product) {
-    const { data, error } = await supabase
+  createProduct(product) {
+    return supabase
       .from('products')
       .insert([product])
       .select()
-    if (error) throw error
-    return data[0]
+      .then(({ data, error }) => {
+        if (error) throw error
+        return data[0]
+      })
   },
 
-  async updateProduct(id, updates) {
-    const { data, error } = await supabase
+  updateProduct(id, updates) {
+    return supabase
       .from('products')
       .update(updates)
       .eq('id', id)
       .select()
-    if (error) throw error
-    return data[0]
+      .then(({ data, error }) => {
+        if (error) throw error
+        return data[0]
+      })
   },
 
-  async deleteProduct(id) {
-    const { data, error } = await supabase
+  deleteProduct(id) {
+    return supabase
       .from('products')
       .update({ is_active: false })
       .eq('id', id)
       .select()
-    if (error) throw error
-    return data[0]
+      .then(({ data, error }) => {
+        if (error) throw error
+        return data[0]
+      })
   },
 
   // Storage
-  async uploadProductImage(file) {
+  uploadProductImage(file) {
     const fileExt = file.name.split('.').pop()
     const fileName = `${Math.random()}.${fileExt}`
     const filePath = `product-images/${fileName}`
 
-    const { error: uploadError } = await supabase.storage
+    return supabase.storage
       .from('products')
       .upload(filePath, file)
-
-    if (uploadError) throw uploadError
-
-    const { data } = supabase.storage
-      .from('products')
-      .getPublicUrl(filePath)
-
-    return data.publicUrl
+      .then(({ error: uploadError }) => {
+        if (uploadError) throw uploadError
+        return supabase.storage
+          .from('products')
+          .getPublicUrl(filePath)
+      })
+      .then(({ data }) => {
+        return data.publicUrl
+      })
   },
 
   // Orders
-  async createOrder(order) {
-    const { data, error } = await supabase
+  createOrder(order) {
+    return supabase
       .from('orders')
       .insert([order])
       .select()
-    if (error) throw error
-    return data[0]
+      .then(({ data, error }) => {
+        if (error) throw error
+        return data[0]
+      })
   },
 
-  async getOrders() {
-    const { data, error } = await supabase
+  getOrders() {
+    return supabase
       .from('orders')
       .select('*')
       .order('created_at', { ascending: false })
-    if (error) throw error
-    return data
+      .then(({ data, error }) => {
+        if (error) throw error
+        return data
+      })
   },
 
-  async updateOrderStatus(id, status) {
-    const { data, error } = await supabase
+  updateOrderStatus(id, status) {
+    return supabase
       .from('orders')
       .update({ status })
       .eq('id', id)
       .select()
-    if (error) throw error
-    return data[0]
+      .then(({ data, error }) => {
+        if (error) throw error
+        return data[0]
+      })
   },
 
-  // Real-time listener for products
+  // Real-time listeners
   subscribeToProducts(callback) {
     return supabase
       .channel('public:products')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, callback)
+      .subscribe()
+  },
+
+  subscribeToOrders(callback) {
+    return supabase
+      .channel('public:orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, callback)
       .subscribe()
   }
 }
