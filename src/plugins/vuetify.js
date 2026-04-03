@@ -11,12 +11,29 @@ const luxuryTheme = {
     primary: '#1A1A1A', // Deep Charcoal/Black
     secondary: '#D4AF37', // Metallic Gold
     accent: '#F5F5DC', // Elegant Beige
-    error: '#E53935', // Modern Red
+    error: '#E53935',
     info: '#1E88E5',
     success: '#43A047',
     warning: '#FB8C00',
     background: '#FDFBFA', // Soft Off-White
     surface: '#FFFFFF',
+    'surface-variant': '#F5F5F5',
+  }
+}
+
+const luxuryDark = {
+  dark: true,
+  colors: {
+    primary: '#FFFFFF', // Off-white for readability
+    secondary: '#D4AF37', // Gold remains the same
+    accent: '#1A1A1A',
+    error: '#FF5252',
+    info: '#2196F3',
+    success: '#4CAF50',
+    warning: '#FB8C00',
+    background: '#0F0F0F', // Very dark background
+    surface: '#1A1A1A', // Slightly lighter surface
+    'surface-variant': '#2A2A2A',
   }
 }
 
@@ -26,7 +43,8 @@ export default createVuetify({
   theme: {
     defaultTheme: 'luxuryTheme',
     themes: {
-      luxuryTheme
+      luxuryTheme,
+      luxuryDark
     }
   },
   defaults: {

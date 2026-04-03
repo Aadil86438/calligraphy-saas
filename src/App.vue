@@ -86,16 +86,16 @@ h1, h2, h3, h4, h5, .luxury-font {
 
 /* Glassmorphism snackbar */
 .glass-snackbar .v-snackbar__wrapper {
-  background: rgba(26, 26, 26, 0.8) !important;
+  background: rgb(var(--v-theme-surface), 0.8) !important;
   backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white !important;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  color: rgb(var(--v-theme-on-surface)) !important;
 }
 
 /* Global Loader Blur */
 .global-loader {
   backdrop-filter: blur(8px);
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgb(var(--v-theme-background), 0.1) !important;
 }
 
 /* Micro-interactions */
@@ -116,14 +116,14 @@ h1, h2, h3, h4, h5, .luxury-font {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgb(var(--v-theme-surface));
 }
 ::-webkit-scrollbar-thumb {
-  background: #D4AF37;
+  background: rgb(var(--v-theme-secondary));
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #b8962d;
+  background: rgb(var(--v-theme-secondary), 0.8);
 }
 
 /* Smooth Transitions */

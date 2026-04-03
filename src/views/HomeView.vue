@@ -1,13 +1,24 @@
 <template>
   <v-main class="bg-background">
     <!-- Premium Navbar -->
-    <v-app-bar flat color="white" class="px-md-10 border-b" sticky>
+    <v-app-bar flat class="px-md-10 border-b" sticky>
       <v-toolbar-title class="luxury-font font-weight-bold text-primary tracking-widest">
         THE CRAFTS STUDIO
       </v-toolbar-title>
       
       <v-spacer></v-spacer>
       
+      <!-- Theme Toggle -->
+      <v-btn
+        icon
+        color="secondary"
+        class="mr-2 theme-toggle-btn"
+        @click="toggleTheme"
+        :title="theme.global.name.value === 'luxuryTheme' ? 'Switch to Dark Mode' : 'Switch to Light Mode'"
+      >
+        <v-icon>{{ theme.global.name.value === 'luxuryTheme' ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
+      </v-btn>
+
       <!-- Social Icons -->
       <div class="hidden-sm-and-down mr-4">
         <v-btn icon color="secondary" :href="CONFIG.YOUTUBE_URL" target="_blank">
@@ -125,86 +136,135 @@
     </v-container>
 
     <!-- Footer -->
-    <v-footer class="text-center d-flex flex-column bg-primary text-white py-16">
-      <div class="luxury-font font-weight-bold text-h4 mb-4 tracking-widest">THE CRAFTS STUDIO</div>
+    <v-footer class="text-center d-flex flex-column bg-surface-variant py-16 border-t px-4">
+      <div class="luxury-font font-weight-bold text-h4 mb-4 tracking-widest text-primary">THE CRAFTS STUDIO</div>
       <div class="d-flex mb-8">
-        <v-btn icon color="white" variant="text" :href="CONFIG.YOUTUBE_URL" target="_blank">
+        <v-btn icon color="secondary" variant="text" :href="CONFIG.YOUTUBE_URL" target="_blank">
           <v-icon>mdi-youtube</v-icon>
         </v-btn>
-        <v-btn icon color="white" variant="text" :href="CONFIG.INSTAGRAM_URL" target="_blank">
+        <v-btn icon color="secondary" variant="text" :href="CONFIG.INSTAGRAM_URL" target="_blank">
           <v-icon>mdi-instagram</v-icon>
         </v-btn>
       </div>
-      <div class="text-grey mb-2">Designed for Elegance. Crafted for You.</div>
-      <div class="text-caption text-grey">© 2026 The Crafts Studio. All rights reserved.</div>
+      <div class="text-grey-darken-1 mb-2 font-weight-medium">Designed for Elegance. Crafted for You.</div>
+      <div class="text-caption text-grey">© 2026 The Crafts Studio. developed Mohammed Aadil <a href="https://github.com/sachin-2004"></a></div>
     </v-footer>
 
     <!-- Product Detail / Order Dialog -->
-    <v-dialog v-model="dialog" max-width="900" transition="dialog-bottom-transition" persistent>
-      <v-card class="rounded-xl overflow-hidden">
-        <v-row no-gutters>
-          <v-col cols="12" md="6" class="bg-grey-lighten-4">
+    <v-dialog 
+      v-model="dialog" 
+      max-width="900" 
+      transition="dialog-bottom-transition" 
+      persistent
+      content-class="product-detail-dialog"
+    >
+      <v-card class="rounded-xl overflow-hidden product-modal-card">
+        <!-- Absolute Close Button -->
+        <v-btn
+          icon="mdi-close"
+          variant="tonal"
+          color="white"
+          class="close-btn-fixed"
+          @click="dialog = false"
+          density="comfortable"
+          elevation="4"
+        ></v-btn>
+
+        <v-row no-gutters class="fill-height flex-column flex-md-row overflow-hidden">
+          <!-- Image Column -->
+          <v-col cols="12" md="6" class="product-image-col bg-grey-lighten-4">
             <v-img
               :src="selectedProduct?.image_url"
+              class="product-hero-img"
               height="100%"
-              min-height="400"
               cover
-            ></v-img>
+            >
+              <template v-slot:placeholder>
+                <v-row class="fill-height ma-0" align="center" justify="center">
+                  <v-progress-circular indeterminate color="grey-lighten-1"></v-progress-circular>
+                </v-row>
+              </template>
+            </v-img>
           </v-col>
-          <v-col cols="12" md="6" class="pa-8 d-flex flex-column">
-            <div class="d-flex justify-space-between align-start mb-4">
-              <div>
-                <h2 class="luxury-font text-h4 mb-1">{{ selectedProduct?.name }}</h2>
-                <div class="text-h5 text-primary font-weight-bold">{{ CONFIG.CURRENCY_SYMBOL }}{{ selectedProduct?.price }}</div>
-              </div>
-              <v-btn icon="mdi-close" variant="text" @click="dialog = false"></v-btn>
-            </div>
 
-            <p class="text-body-1 text-grey-darken-1 mb-8">
-              {{ selectedProduct?.description || 'A unique, handcrafted calligraphy piece, made to order with the finest materials and attention to detail.' }}
-            </p>
-
-            <v-divider class="mb-8"></v-divider>
-
-            <v-form ref="form" v-model="valid" class="flex-grow-1">
-              <v-text-field
-                v-model="orderForm.customer_name"
-                label="Your Name"
-                :rules="[v => !!v || 'Required']"
-                required
-              ></v-text-field>
-              
-              <v-text-field
-                v-model="orderForm.phone"
-                label="WhatsApp Number"
-                placeholder="e.g. 86438..."
-                :rules="[v => !!v || 'Required']"
-                required
-              ></v-text-field>
-
-              <v-textarea
-                v-model="orderForm.custom_text"
-                label="Personalization Text"
-                placeholder="What should I write? (e.g. A name or a quote)"
-                rows="2"
-              ></v-textarea>
-
-              <div class="mt-auto pt-4">
-                <v-btn
-                  block
-                  color="primary"
-                  size="large"
-                  :loading="orderLoading"
-                  @click="submitOrder"
-                  class="font-weight-bold text-h6"
-                >
-                  Confirm & Order via WhatsApp
-                </v-btn>
-                <div class="text-caption text-center mt-4 text-grey">
-                  By clicking confirm, your order will be saved and you'll be redirected to WhatsApp to finalize.
+          <!-- Content Column -->
+          <v-col cols="12" md="6" class="d-flex flex-column modal-content-col bg-surface">
+            <!-- Scrollable Content Area -->
+            <v-card-text class="overflow-y-auto flex-grow-1 content-scroll-area pa-6 pa-md-10">
+              <div class="d-flex justify-space-between align-start mb-6">
+                <div>
+                  <h2 class="luxury-font text-h4 mb-1 text-primary">{{ selectedProduct?.name }}</h2>
+                  <div class="text-h5 text-secondary font-weight-bold">
+                    {{ CONFIG.CURRENCY_SYMBOL }}{{ selectedProduct?.price }}
+                  </div>
                 </div>
               </div>
-            </v-form>
+
+              <p class="text-body-1 text-grey-darken-1 mb-8">
+                {{ selectedProduct?.description || 'A unique, handcrafted calligraphy piece, made to order with the finest materials and attention to detail.' }}
+              </p>
+
+              <v-divider class="mb-8"></v-divider>
+
+              <div class="luxury-font text-overline mb-4 text-secondary font-weight-bold">Personalize Your Piece</div>
+
+              <v-form ref="form" v-model="valid" class="order-form pb-4">
+                <v-text-field
+                  v-model="orderForm.customer_name"
+                  label="Your Name"
+                  placeholder="Enter your name"
+                  variant="outlined"
+                  density="comfortable"
+                  :rules="[v => !!v || 'Name is required']"
+                  required
+                  class="mb-2"
+                ></v-text-field>
+                
+                <v-text-field
+                  v-model="orderForm.phone"
+                  label="WhatsApp Number"
+                  placeholder="e.g. 86438..."
+                  variant="outlined"
+                  density="comfortable"
+                  :rules="[v => !!v || 'WhatsApp number is required']"
+                  required
+                  class="mb-2"
+                ></v-text-field>
+
+                <v-textarea
+                  v-model="orderForm.custom_text"
+                  label="Personalization Details"
+                  placeholder="What should I write? (e.g. A name, a quote, or special date)"
+                  rows="3"
+                  variant="outlined"
+                  auto-grow
+                  counter
+                  maxlength="200"
+                ></v-textarea>
+              </v-form>
+              
+              <div class="hidden-md-and-up pb-10"></div> <!-- Extra spacing for sticky button mobile -->
+            </v-card-text>
+
+            <!-- Sticky/Fixed Footer for Action Button -->
+            <v-divider></v-divider>
+            <div class="pa-4 pa-md-10 sticky-footer bg-surface shadow-top">
+              <v-btn
+                block
+                color="primary"
+                size="x-large"
+                :loading="orderLoading"
+                @click="submitOrder"
+                class="font-weight-bold text-subtitle-1 rounded-pill"
+                elevation="8"
+              >
+                Confirm & Order via WhatsApp
+                <v-icon right class="ml-2">mdi-whatsapp</v-icon>
+              </v-btn>
+              <div class="text-caption text-center mt-3 text-grey">
+                Your order details will open in WhatsApp
+              </div>
+            </div>
           </v-col>
         </v-row>
       </v-card>
@@ -214,8 +274,15 @@
 
 <script setup>
 import { ref, computed, onMounted, inject } from 'vue'
+import { useTheme } from 'vuetify'
 import { SupabaseService } from '../services/SupabaseService'
 import { CONFIG } from '../config/constants'
+
+const theme = useTheme()
+
+const toggleTheme = () => {
+  theme.global.name.value = theme.global.name.value === 'luxuryTheme' ? 'luxuryDark' : 'luxuryTheme'
+}
 
 const products = ref([])
 const loading = ref(true)
@@ -344,36 +411,61 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.max-width-600 {
-  max-width: 600px;
+.product-detail-dialog :deep(.v-overlay__content) {
+  max-height: 90vh !important;
+  margin: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-.product-card {
-  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-  cursor: pointer;
-  border: 1px solid rgba(0,0,0,0.05) !important;
+.product-modal-card {
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.product-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 30px rgba(212, 175, 55, 0.1) !important;
-  border-color: rgba(212, 175, 55, 0.3) !important;
+.close-btn-fixed {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
-.product-img {
-  transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+.product-image-col {
+  height: 250px;
+  flex: 0 0 250px;
 }
 
-.product-card:hover .product-img {
-  transform: scale(1.1);
+.modal-content-col {
+  flex: 1 1 auto;
+  min-height: 0; /* Important for internal scrolling */
 }
 
-.search-bar :deep(.v-field__outline) {
-  --v-field-border-opacity: 0.1;
+.content-scroll-area {
+  background-attachment: local;
 }
 
-.sort-select :deep(.v-field__outline) {
-  --v-field-border-opacity: 0.1;
+@media (min-width: 960px) {
+  .product-image-col {
+    height: 100%;
+    flex: 0 0 50%;
+  }
+  .product-modal-card {
+    height: 700px;
+  }
+  .close-btn-fixed {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: #333 !important;
+  }
+}
+
+.shadow-top {
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .transition-transform {
