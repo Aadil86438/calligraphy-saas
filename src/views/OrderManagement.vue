@@ -153,7 +153,7 @@
         <v-card-text class="pa-0">
           <div id="invoice-print-area" class="invoice-container mx-auto pa-16 bg-white my-10 border shadow-2xl relative">
             <!-- Luxury Watermark -->
-            <div class="watermark luxury-font">THE CRAFTS STUDIO</div>
+            <div class="watermark luxury-font">Nafzz studio</div>
 
             <!-- Invoice Header -->
             <div class="d-flex justify-space-between mb-16 relative">

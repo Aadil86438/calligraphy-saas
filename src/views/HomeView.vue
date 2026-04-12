@@ -3,7 +3,7 @@
     <!-- Premium Navbar -->
     <v-app-bar flat class="px-md-10 border-b" sticky>
       <v-toolbar-title class="luxury-font font-weight-bold text-primary tracking-widest">
-        THE CRAFTS STUDIO
+        Nafzz studio
       </v-toolbar-title>
       
       <v-spacer></v-spacer>
@@ -137,7 +137,7 @@
 
     <!-- Footer -->
     <v-footer class="text-center d-flex flex-column bg-surface-variant py-16 border-t px-4">
-      <div class="luxury-font font-weight-bold text-h4 mb-4 tracking-widest text-primary">THE CRAFTS STUDIO</div>
+      <div class="luxury-font font-weight-bold text-h4 mb-4 tracking-widest text-primary">Nafzz studio</div>
       <div class="d-flex mb-8">
         <v-btn icon color="secondary" variant="text" :href="CONFIG.YOUTUBE_URL" target="_blank">
           <v-icon>mdi-youtube</v-icon>
@@ -147,7 +147,7 @@
         </v-btn>
       </div>
       <div class="text-grey-darken-1 mb-2 font-weight-medium">Designed for Elegance. Crafted for You.</div>
-      <div class="text-caption text-grey">© 2026 The Crafts Studio. developed Mohammed Aadil <a href="https://github.com/sachin-2004"></a></div>
+      <div class="text-caption text-grey">© 2026 Nafzz studio. developed Mohammed Aadil <a href="https://github.com/sachin-2004"></a></div>
     </v-footer>
 
     <!-- Product Detail / Order Dialog -->
@@ -371,7 +371,7 @@ const submitOrder = () => {
           showMessage('Order recorded! Redirecting to WhatsApp...')
           
           // Construct structured WhatsApp message
-          const message = `*NEW ORDER FROM THE CRAFTS STUDIO*
+          const message = `*NEW ORDER FROM THE Nafzz studio*
 ------------------------------
 *Product:* ${selectedProduct.value.name}
 *Price:* ${CONFIG.CURRENCY_SYMBOL}${selectedProduct.value.price}

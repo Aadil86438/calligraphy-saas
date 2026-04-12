@@ -3,5 +3,5 @@ export const CONFIG = {
   CURRENCY_SYMBOL: '₹',
   YOUTUBE_URL: 'https://youtube.com/@nafzzcalligraphy?si=0CQPGxebe-D4Y3QX',
   INSTAGRAM_URL: 'https://instagram.com/@nafzzcalligraphy', // Assuming the same handle
-  APP_NAME: 'The Crafts Studio'
+  APP_NAME: 'Nafzz studio',
 }

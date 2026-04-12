@@ -10,7 +10,7 @@
       class="border-r"
     >
       <div class="pa-8 mb-4">
-        <h2 class="luxury-font text-white tracking-widest text-h5">CRAFTS ADMIN</h2>
+        <h2 class="luxury-font text-white tracking-widest text-h5">Nafzz studio Admin</h2>
         <div class="text-caption text-secondary mt-1">Management Portal</div>
       </div>
 
