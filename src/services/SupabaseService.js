@@ -199,16 +199,16 @@ export const SupabaseService = {
   },
 
   // Real-time listeners
-  subscribeToProducts(callback) {
+  subscribeToProducts(channelName, callback) {
     return supabase
-      .channel('public:products')
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, callback)
       .subscribe()
   },
 
-  subscribeToOrders(callback) {
+  subscribeToOrders(channelName, callback) {
     return supabase
-      .channel('public:orders')
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, callback)
       .subscribe()
   }

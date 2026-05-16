@@ -8,6 +8,11 @@ const routes = [
     component: () => import('../views/HomeView.vue')
   },
   {
+    path: '/digital',
+    name: 'DigitalProducts',
+    component: () => import('../views/DigitalProducts.vue')
+  },
+  {
     path: '/admin/login',
     name: 'AdminLogin',
     component: () => import('../views/AdminLogin.vue')
@@ -16,24 +21,16 @@ const routes = [
     path: '/admin',
     name: 'AdminDashboard',
     component: () => import('../views/AdminDashboard.vue'),
-    meta: { requiresAuth: true },
-    children: [
-      {
-        path: '',
-        name: 'AdminOverview',
-        component: () => import('../views/AdminOverview.vue')
-      },
-      {
-        path: 'products',
-        name: 'ProductManagement',
-        component: () => import('../views/ProductManagement.vue')
-      },
-      {
-        path: 'orders',
-        name: 'OrderManagement',
-        component: () => import('../views/OrderManagement.vue')
-      }
-    ]
+    meta: { requiresAuth: true }
+  },
+  // Redirect old child routes to admin (tabs handle them now)
+  {
+    path: '/admin/products',
+    redirect: '/admin'
+  },
+  {
+    path: '/admin/orders',
+    redirect: '/admin'
   }
 ]
 

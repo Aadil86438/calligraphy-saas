@@ -1,130 +1,136 @@
 <template>
   <v-container fluid class="pa-0">
-    <div class="d-flex align-center justify-space-between mb-8">
-      <div>
-        <h1 class="text-h4 luxury-font mb-1 text-primary">Order Management</h1>
-        <p class="text-subtitle-2 text-grey">Track and fulfill your customer requests</p>
-      </div>
-    </div>
-
-    <!-- Stats Row -->
-    <v-row class="mb-8">
-      <v-col cols="12" sm="6" md="3">
-        <v-card class="pa-6 border-thin shadow-sm">
-          <div class="d-flex align-center justify-space-between">
-            <div>
-              <div class="text-overline text-grey-darken-1 mb-1">Total Orders</div>
-              <div class="text-h4 font-weight-bold">{{ orders.length }}</div>
-            </div>
-            <v-icon color="primary" size="40">mdi-cart-outline</v-icon>
-          </div>
-        </v-card>
-      </v-col>
-      <v-col cols="12" sm="6" md="3">
-        <v-card class="pa-6 border-thin shadow-sm">
-          <div class="d-flex align-center justify-space-between">
-            <div>
-              <div class="text-overline text-warning mb-1">Pending</div>
-              <div class="text-h4 font-weight-bold text-warning">{{ orders.filter(o => o.status === 'pending').length }}</div>
-            </div>
-            <v-icon color="warning" size="40">mdi-clock-outline</v-icon>
-          </div>
-        </v-card>
-      </v-col>
-      <v-col cols="12" sm="6" md="3">
-        <v-card class="pa-6 border-thin shadow-sm text-success">
-          <div class="d-flex align-center justify-space-between">
-            <div>
-              <div class="text-overline text-success mb-1">Revenue</div>
-              <div class="text-h4 font-weight-bold">{{ CONFIG.CURRENCY_SYMBOL }}{{ totalRevenue }}</div>
-            </div>
-            <v-icon color="success" size="40">mdi-cash-multiple</v-icon>
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
-
     <!-- Orders Table -->
-    <v-card class="border-thin shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <v-table hover class="min-width-800">
+    <v-card class="border-thin shadow-sm overflow-hidden" :loading="loading">
+      <div v-if="loading" class="pa-16 text-center">
+        <v-progress-circular indeterminate color="primary"></v-progress-circular>
+      </div>
+      <div v-else class="overflow-x-auto">
+        <v-table hover class="orders-table">
           <thead class="bg-grey-lighten-4">
             <tr>
-              <th class="font-weight-bold py-4">Customer</th>
-              <th class="font-weight-bold py-4">Product</th>
-              <th class="font-weight-bold py-4">Amount</th>
-              <th class="font-weight-bold py-4">Placed On</th>
-              <th class="font-weight-bold py-4 text-center">Status</th>
-              <th class="font-weight-bold py-4 text-right">Invoice</th>
+              <th style="width: 40px"></th>
+              <th class="font-weight-bold py-4">CUSTOMER</th>
+              <th class="font-weight-bold py-4">PHONE</th>
+              <th class="font-weight-bold py-4">ITEMS</th>
+              <th class="font-weight-bold py-4">TOTAL</th>
+              <th class="font-weight-bold py-4">DATE</th>
+              <th class="font-weight-bold py-4 text-center">STATUS</th>
+              <th class="font-weight-bold py-4 text-right">INVOICE</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="order in orders" :key="order.id">
-              <td class="py-4">
-                <div class="font-weight-bold text-subtitle-1">{{ order.customer_name }}</div>
-                <div class="text-caption text-secondary d-flex align-center">
-                  <v-icon size="14" class="mr-1">mdi-whatsapp</v-icon>
-                  {{ order.phone }}
-                </div>
-              </td>
-              <td>
-                <div class="font-weight-medium">{{ order.product_name }}</div>
-                <div class="text-caption text-grey text-truncate" style="max-width: 200px">
-                  <template v-if="order.order_items && order.order_items.length > 1">
-                    {{ order.order_items.length }} items
-                  </template>
-                  <template v-else>
-                    {{ order.custom_text || 'No personalization' }}
-                  </template>
-                </div>
-              </td>
-              <td class="font-weight-bold text-primary">
-                {{ CONFIG.CURRENCY_SYMBOL }}{{ order.total_amount || order.price }}
-              </td>
-              <td>
-                <div class="text-body-2">{{ new Date(order.created_at).toLocaleDateString() }}</div>
-                <div class="text-caption text-grey">{{ new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</div>
-              </td>
-              <td class="text-center">
-                <v-select
-                  v-model="order.status"
-                  :items="['pending', 'completed']"
-                  variant="plain"
-                  density="compact"
-                  hide-details
-                  class="status-select rounded-lg"
-                  :color="order.status === 'completed' ? 'success' : 'warning'"
-                  @update:model-value="updateStatus(order)"
-                >
-                  <template v-slot:selection="{ item }">
-                    <v-chip
-                      :color="item.value === 'completed' ? 'success' : 'warning'"
-                      size="x-small"
-                      variant="flat"
-                      class="px-2 font-weight-bold"
-                    >
-                      {{ (item.title || '').toUpperCase() }}
-                    </v-chip>
-                  </template>
-                </v-select>
-              </td>
-              <td class="text-right">
-                <v-btn
-                  v-if="order.status === 'completed'"
-                  icon="mdi-printer-outline"
-                  variant="text"
-                  color="primary"
-                  @click="viewInvoice(order)"
-                ></v-btn>
-                <v-btn
-                  v-else
-                  icon="mdi-eye-outline"
-                  variant="text"
-                  color="grey"
-                  @click="viewInvoice(order)"
-                ></v-btn>
-              </td>
-            </tr>
+            <template v-for="order in orders" :key="order.id">
+              <!-- Main Row -->
+              <tr class="order-row">
+                <td class="py-3">
+                  <v-btn
+                    icon
+                    size="x-small"
+                    variant="text"
+                    @click="toggleExpand(order.id)"
+                  >
+                    <v-icon>{{ expandedOrders.has(order.id) ? 'mdi-chevron-down' : 'mdi-chevron-right' }}</v-icon>
+                  </v-btn>
+                </td>
+                <td class="py-3">
+                  <div class="d-flex align-center">
+                    <v-avatar color="grey-lighten-4" size="36" class="mr-3">
+                      <span class="text-primary font-weight-bold text-body-2">{{ order.customer_name?.charAt(0)?.toUpperCase() }}</span>
+                    </v-avatar>
+                    <span class="font-weight-bold text-body-2">{{ order.customer_name }}</span>
+                  </div>
+                </td>
+                <td class="text-body-2">{{ order.phone }}</td>
+                <td>
+                  <v-chip
+                    size="small"
+                    variant="tonal"
+                    color="success"
+                    class="font-weight-medium"
+                  >
+                    {{ getItemCount(order) }} item{{ getItemCount(order) !== 1 ? 's' : '' }}
+                  </v-chip>
+                </td>
+                <td class="text-secondary font-weight-bold">
+                  {{ CONFIG.CURRENCY_SYMBOL }}{{ formatAmount(order.total_amount || order.price) }}
+                </td>
+                <td class="text-body-2 text-grey-darken-1">
+                  {{ formatDate(order.created_at) }}
+                </td>
+                <td class="text-center">
+                  <v-select
+                    v-model="order.status"
+                    :items="['pending', 'completed']"
+                    variant="plain"
+                    density="compact"
+                    hide-details
+                    class="status-select rounded-lg"
+                    :color="order.status === 'completed' ? 'success' : 'warning'"
+                    @update:model-value="updateStatus(order)"
+                  >
+                    <template v-slot:selection="{ item }">
+                      <v-chip
+                        :color="item.value === 'completed' ? 'success' : 'warning'"
+                        size="x-small"
+                        variant="flat"
+                        class="px-2 font-weight-bold"
+                      >
+                        {{ (item.title || '').toUpperCase() }}
+                      </v-chip>
+                    </template>
+                  </v-select>
+                </td>
+                <td class="text-right">
+                  <v-btn
+                    icon="mdi-printer-outline"
+                    variant="text"
+                    size="small"
+                    :color="order.status === 'completed' ? 'primary' : 'grey'"
+                    @click="viewInvoice(order)"
+                  ></v-btn>
+                </td>
+              </tr>
+
+              <!-- Expanded Row: Order Items -->
+              <tr v-if="expandedOrders.has(order.id)" class="expanded-row">
+                <td colspan="8" class="pa-0">
+                  <div class="bg-grey-lighten-5 pa-4 pl-14">
+                    <v-table density="compact" class="bg-transparent">
+                      <thead>
+                        <tr>
+                          <th class="text-caption font-weight-bold">Product</th>
+                          <th class="text-caption font-weight-bold text-center">Qty</th>
+                          <th class="text-caption font-weight-bold text-right">Price</th>
+                          <th class="text-caption font-weight-bold text-right">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template v-if="order.order_items && order.order_items.length > 0">
+                          <tr v-for="item in order.order_items" :key="item.id">
+                            <td class="text-body-2">{{ item.product_name }}</td>
+                            <td class="text-body-2 text-center">{{ item.quantity }}</td>
+                            <td class="text-body-2 text-right">{{ CONFIG.CURRENCY_SYMBOL }}{{ item.price }}</td>
+                            <td class="text-body-2 text-right font-weight-bold">{{ CONFIG.CURRENCY_SYMBOL }}{{ item.subtotal }}</td>
+                          </tr>
+                        </template>
+                        <template v-else>
+                          <tr>
+                            <td class="text-body-2">{{ order.product_name }}</td>
+                            <td class="text-body-2 text-center">1</td>
+                            <td class="text-body-2 text-right">{{ CONFIG.CURRENCY_SYMBOL }}{{ order.price }}</td>
+                            <td class="text-body-2 text-right font-weight-bold">{{ CONFIG.CURRENCY_SYMBOL }}{{ order.price }}</td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </v-table>
+                    <div v-if="order.custom_text" class="mt-2 text-caption text-grey-darken-1">
+                      <strong>Notes:</strong> {{ order.custom_text }}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </v-table>
       </div>
@@ -293,23 +299,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, inject } from 'vue'
 import { SupabaseService } from '../services/SupabaseService'
 import { CONFIG } from '../config/constants'
 
 const orders = ref([])
+const expandedOrders = ref(new Set())
 const invoiceDialog = ref(false)
 const selectedOrder = ref(null)
 const invoiceItems = ref([])
 const showMessage = inject('showMessage')
-const setLoading = inject('setLoading')
-
-const totalRevenue = computed(() => {
-  return orders.value
-    .filter(o => o.status === 'completed')
-    .reduce((sum, o) => sum + parseFloat(o.total_amount || o.price || 0), 0)
-    .toFixed(2)
-})
+const loading = ref(true)
 
 const invoiceTotal = computed(() => {
   if (invoiceItems.value.length > 0) {
@@ -318,10 +318,35 @@ const invoiceTotal = computed(() => {
   return selectedOrder.value?.total_amount || selectedOrder.value?.price || '0'
 })
 
+const getItemCount = (order) => {
+  if (order.order_items && order.order_items.length > 0) {
+    return order.order_items.length
+  }
+  return 1
+}
+
+const toggleExpand = (orderId) => {
+  if (expandedOrders.value.has(orderId)) {
+    expandedOrders.value.delete(orderId)
+  } else {
+    expandedOrders.value.add(orderId)
+  }
+}
+
+const formatDate = (dateStr) => {
+  return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+const formatAmount = (val) => {
+  return Number(val || 0).toLocaleString()
+}
+
 const fetchOrders = () => {
-  setLoading(true)
+  console.log('OrderManagement: fetchOrders started')
+  loading.value = true
   SupabaseService.getOrdersWithItems()
     .then((data) => {
+      console.log('OrderManagement: fetchOrders success', data)
       orders.value = data
     })
     .catch(() => {
@@ -335,7 +360,7 @@ const fetchOrders = () => {
         })
     })
     .finally(() => {
-      setLoading(false)
+      loading.value = false
     })
 }
 
@@ -353,18 +378,16 @@ const updateStatus = (order) => {
 const viewInvoice = (order) => {
   selectedOrder.value = order
 
-  // Check for embedded order_items (from getOrdersWithItems join)
   if (order.order_items && order.order_items.length > 0) {
     invoiceItems.value = order.order_items
     invoiceDialog.value = true
   } else {
-    // Try fetching order_items separately
     SupabaseService.getOrderItems(order.id)
       .then((items) => {
         invoiceItems.value = items || []
       })
       .catch(() => {
-        invoiceItems.value = [] // Legacy order — no items table
+        invoiceItems.value = []
       })
       .finally(() => {
         invoiceDialog.value = true
@@ -380,10 +403,15 @@ const printInvoice = () => {
 let orderSub = null
 
 onMounted(() => {
-  fetchOrders()
-  orderSub = SupabaseService.subscribeToOrders(() => {
+  try {
+    console.log('OrderManagement: mounted start')
     fetchOrders()
-  })
+    orderSub = SupabaseService.subscribeToOrders('mgmt-orders', () => {
+      fetchOrders()
+    })
+  } catch (err) {
+    console.error('OrderManagement: mounted error', err)
+  }
 })
 
 onUnmounted(() => {
@@ -392,7 +420,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.min-width-800 {
+.orders-table {
   min-width: 800px;
 }
 
@@ -401,9 +429,17 @@ onUnmounted(() => {
   margin: 0 auto;
 }
 
+.order-row {
+  cursor: pointer;
+}
+
+.expanded-row td {
+  border-bottom: none !important;
+}
+
 .invoice-container {
-  max-width: 210mm; /* A4 Width */
-  min-height: 297mm; /* A4 Height */
+  max-width: 210mm;
+  min-height: 297mm;
   position: relative;
   overflow: hidden;
 }

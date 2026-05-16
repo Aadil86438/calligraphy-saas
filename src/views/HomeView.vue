@@ -46,6 +46,7 @@
         </v-badge>
       </v-btn>
 
+      <v-btn variant="text" to="/digital" class="font-weight-bold mr-1">Digital Shop</v-btn>
       <v-btn variant="text" to="/admin" class="font-weight-bold">Admin</v-btn>
     </v-app-bar>
 
@@ -388,7 +389,7 @@ const handleAddToCartFromDetail = () => {
 onMounted(() => {
   fetchProducts()
   // Real-time subscription
-  SupabaseService.subscribeToProducts(() => {
+  SupabaseService.subscribeToProducts('home-products', () => {
     fetchProducts()
   })
 })
