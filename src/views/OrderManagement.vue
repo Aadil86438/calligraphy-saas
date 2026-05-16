@@ -70,11 +70,16 @@
               <td>
                 <div class="font-weight-medium">{{ order.product_name }}</div>
                 <div class="text-caption text-grey text-truncate" style="max-width: 200px">
-                  {{ order.custom_text || 'No personalization' }}
+                  <template v-if="order.order_items && order.order_items.length > 1">
+                    {{ order.order_items.length }} items
+                  </template>
+                  <template v-else>
+                    {{ order.custom_text || 'No personalization' }}
+                  </template>
                 </div>
               </td>
               <td class="font-weight-bold text-primary">
-                {{ CONFIG.CURRENCY_SYMBOL }}{{ order.price }}
+                {{ CONFIG.CURRENCY_SYMBOL }}{{ order.total_amount || order.price }}
               </td>
               <td>
                 <div class="text-body-2">{{ new Date(order.created_at).toLocaleDateString() }}</div>
@@ -197,29 +202,59 @@
               </v-col>
             </v-row>
 
-            <!-- Items Table -->
+            <!-- Items Table — Multi-product aware -->
             <div class="border rounded-lg overflow-hidden mb-12">
               <v-table class="invoice-table">
                 <thead class="bg-grey-lighten-4">
                   <tr>
                     <th class="py-4 font-weight-bold">ITEM DESCRIPTION</th>
-                    <th class="py-4 font-weight-bold text-right">TOTAL AMOUNT</th>
+                    <th class="py-4 font-weight-bold text-center" style="width: 60px">QTY</th>
+                    <th class="py-4 font-weight-bold text-right" style="width: 110px">UNIT PRICE</th>
+                    <th class="py-4 font-weight-bold text-right" style="width: 110px">SUBTOTAL</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td class="py-8">
-                      <div class="text-h6 font-weight-bold mb-1">{{ selectedOrder?.product_name }}</div>
-                      <div class="text-body-2 text-grey-darken-1">
-                        <em>Personalization:</em> {{ selectedOrder?.custom_text || 'Standard Design' }}
-                      </div>
-                    </td>
-                    <td class="text-right text-h6 font-weight-bold">
-                      {{ CONFIG.CURRENCY_SYMBOL }}{{ selectedOrder?.price }}
-                    </td>
-                  </tr>
+                  <!-- New multi-item orders -->
+                  <template v-if="invoiceItems.length > 0">
+                    <tr v-for="item in invoiceItems" :key="item.id">
+                      <td class="py-6">
+                        <div class="text-subtitle-1 font-weight-bold mb-1">{{ item.product_name }}</div>
+                      </td>
+                      <td class="text-center font-weight-medium">{{ item.quantity }}</td>
+                      <td class="text-right font-weight-medium">
+                        {{ CONFIG.CURRENCY_SYMBOL }}{{ item.price }}
+                      </td>
+                      <td class="text-right text-subtitle-1 font-weight-bold">
+                        {{ CONFIG.CURRENCY_SYMBOL }}{{ item.subtotal }}
+                      </td>
+                    </tr>
+                  </template>
+                  <!-- Legacy single-item orders (no order_items) -->
+                  <template v-else>
+                    <tr>
+                      <td class="py-8">
+                        <div class="text-h6 font-weight-bold mb-1">{{ selectedOrder?.product_name }}</div>
+                        <div class="text-body-2 text-grey-darken-1">
+                          <em>Personalization:</em> {{ selectedOrder?.custom_text || 'Standard Design' }}
+                        </div>
+                      </td>
+                      <td class="text-center font-weight-medium">1</td>
+                      <td class="text-right font-weight-medium">
+                        {{ CONFIG.CURRENCY_SYMBOL }}{{ selectedOrder?.price }}
+                      </td>
+                      <td class="text-right text-h6 font-weight-bold">
+                        {{ CONFIG.CURRENCY_SYMBOL }}{{ selectedOrder?.price }}
+                      </td>
+                    </tr>
+                  </template>
                 </tbody>
               </v-table>
+            </div>
+
+            <!-- Personalization note for multi-item orders -->
+            <div v-if="selectedOrder?.custom_text && invoiceItems.length > 0" class="mb-8 pa-4 bg-grey-lighten-4 rounded-lg">
+              <div class="text-overline text-secondary mb-1">ORDER NOTES</div>
+              <div class="text-body-2 text-grey-darken-1">{{ selectedOrder.custom_text }}</div>
             </div>
 
             <!-- Totals -->
@@ -227,7 +262,7 @@
               <v-col cols="12" sm="5">
                 <div class="d-flex justify-space-between py-2 border-b">
                   <span class="text-grey">Subtotal</span>
-                  <span class="font-weight-bold">{{ CONFIG.CURRENCY_SYMBOL }}{{ selectedOrder?.price }}</span>
+                  <span class="font-weight-bold">{{ CONFIG.CURRENCY_SYMBOL }}{{ invoiceTotal }}</span>
                 </div>
                 <div class="d-flex justify-space-between py-2 border-b">
                   <span class="text-grey">Tax (0%)</span>
@@ -235,7 +270,7 @@
                 </div>
                 <div class="d-flex justify-space-between py-4 mt-2 bg-primary text-white px-4 rounded-lg">
                   <span class="text-h6 luxury-font">GRAND TOTAL</span>
-                  <span class="text-h4 font-weight-bold">{{ CONFIG.CURRENCY_SYMBOL }}{{ selectedOrder?.price }}</span>
+                  <span class="text-h4 font-weight-bold">{{ CONFIG.CURRENCY_SYMBOL }}{{ invoiceTotal }}</span>
                 </div>
               </v-col>
             </v-row>
@@ -265,24 +300,39 @@ import { CONFIG } from '../config/constants'
 const orders = ref([])
 const invoiceDialog = ref(false)
 const selectedOrder = ref(null)
+const invoiceItems = ref([])
 const showMessage = inject('showMessage')
 const setLoading = inject('setLoading')
 
 const totalRevenue = computed(() => {
   return orders.value
     .filter(o => o.status === 'completed')
-    .reduce((sum, o) => sum + parseFloat(o.price || 0), 0)
+    .reduce((sum, o) => sum + parseFloat(o.total_amount || o.price || 0), 0)
     .toFixed(2)
+})
+
+const invoiceTotal = computed(() => {
+  if (invoiceItems.value.length > 0) {
+    return invoiceItems.value.reduce((sum, item) => sum + parseFloat(item.subtotal || 0), 0).toFixed(0)
+  }
+  return selectedOrder.value?.total_amount || selectedOrder.value?.price || '0'
 })
 
 const fetchOrders = () => {
   setLoading(true)
-  SupabaseService.getOrders()
+  SupabaseService.getOrdersWithItems()
     .then((data) => {
       orders.value = data
     })
     .catch(() => {
-      showMessage('Error fetching orders', 'error')
+      // Fallback to legacy getOrders if order_items table doesn't exist yet
+      SupabaseService.getOrders()
+        .then((data) => {
+          orders.value = data
+        })
+        .catch(() => {
+          showMessage('Error fetching orders', 'error')
+        })
     })
     .finally(() => {
       setLoading(false)
@@ -302,7 +352,24 @@ const updateStatus = (order) => {
 
 const viewInvoice = (order) => {
   selectedOrder.value = order
-  invoiceDialog.value = true
+
+  // Check for embedded order_items (from getOrdersWithItems join)
+  if (order.order_items && order.order_items.length > 0) {
+    invoiceItems.value = order.order_items
+    invoiceDialog.value = true
+  } else {
+    // Try fetching order_items separately
+    SupabaseService.getOrderItems(order.id)
+      .then((items) => {
+        invoiceItems.value = items || []
+      })
+      .catch(() => {
+        invoiceItems.value = [] // Legacy order — no items table
+      })
+      .finally(() => {
+        invoiceDialog.value = true
+      })
+  }
 }
 
 const printInvoice = () => {

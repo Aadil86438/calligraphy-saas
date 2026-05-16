@@ -143,6 +143,61 @@ export const SupabaseService = {
       })
   },
 
+  // Order with Items (Multi-product checkout)
+  async createOrderWithItems(order, items) {
+    // Step 1: Create the order
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .insert([order])
+      .select()
+
+    if (orderError) throw orderError
+    if (!orderData || orderData.length === 0) throw new Error('Order creation failed')
+
+    const createdOrder = orderData[0]
+
+    // Step 2: Insert order_items with the new order_id
+    const itemsWithOrderId = items.map(item => ({
+      ...item,
+      order_id: createdOrder.id
+    }))
+
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .insert(itemsWithOrderId)
+
+    if (itemsError) {
+      // Attempt cleanup: delete the orphaned order
+      await supabase.from('orders').delete().eq('id', createdOrder.id)
+      throw itemsError
+    }
+
+    return createdOrder
+  },
+
+  getOrderItems(orderId) {
+    return supabase
+      .from('order_items')
+      .select('*')
+      .eq('order_id', orderId)
+      .order('created_at', { ascending: true })
+      .then(({ data, error }) => {
+        if (error) throw error
+        return data
+      })
+  },
+
+  getOrdersWithItems() {
+    return supabase
+      .from('orders')
+      .select('*, order_items(*)')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) throw error
+        return data
+      })
+  },
+
   // Real-time listeners
   subscribeToProducts(callback) {
     return supabase

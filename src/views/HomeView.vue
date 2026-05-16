@@ -29,6 +29,23 @@
         </v-btn>
       </div>
 
+      <!-- Cart Button -->
+      <v-btn
+        icon
+        color="secondary"
+        class="mr-2"
+        @click="cartDrawerOpen = true"
+      >
+        <v-badge
+          :content="cart.cartCount"
+          :model-value="cart.cartCount > 0"
+          color="error"
+          floating
+        >
+          <v-icon>mdi-cart-outline</v-icon>
+        </v-badge>
+      </v-btn>
+
       <v-btn variant="text" to="/admin" class="font-weight-bold">Admin</v-btn>
     </v-app-bar>
 
@@ -117,9 +134,10 @@
                 color="primary"
                 variant="flat"
                 class="mt-2 text-none"
-                @click.stop="openOrderDialog(product)"
+                @click.stop="handleAddToCart(product)"
               >
-                Order Now
+                <v-icon start>mdi-cart-plus</v-icon>
+                Add to Cart
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -150,12 +168,11 @@
       <div class="text-caption text-grey">© 2026 Nafzz studio. developed Mohammed Aadil <a href="https://github.com/sachin-2004"></a></div>
     </v-footer>
 
-    <!-- Product Detail / Order Dialog -->
+    <!-- Product Detail Dialog (View only — no order form) -->
     <v-dialog 
       v-model="dialog" 
       max-width="900" 
       transition="dialog-bottom-transition" 
-      persistent
       content-class="product-detail-dialog"
     >
       <v-card class="rounded-xl overflow-hidden product-modal-card">
@@ -189,7 +206,6 @@
 
           <!-- Content Column -->
           <v-col cols="12" md="6" class="d-flex flex-column modal-content-col bg-surface">
-            <!-- Scrollable Content Area -->
             <v-card-text class="overflow-y-auto flex-grow-1 content-scroll-area pa-6 pa-md-10">
               <div class="d-flex justify-space-between align-start mb-6">
                 <div>
@@ -206,69 +222,66 @@
 
               <v-divider class="mb-8"></v-divider>
 
-              <div class="luxury-font text-overline mb-4 text-secondary font-weight-bold">Personalize Your Piece</div>
-
-              <v-form ref="form" v-model="valid" class="order-form pb-4">
-                <v-text-field
-                  v-model="orderForm.customer_name"
-                  label="Your Name"
-                  placeholder="Enter your name"
-                  variant="outlined"
-                  density="comfortable"
-                  :rules="[v => !!v || 'Name is required']"
-                  required
-                  class="mb-2"
-                ></v-text-field>
-                
-                <v-text-field
-                  v-model="orderForm.phone"
-                  label="WhatsApp Number"
-                  placeholder="e.g. 86438..."
-                  variant="outlined"
-                  density="comfortable"
-                  :rules="[v => !!v || 'WhatsApp number is required']"
-                  required
-                  class="mb-2"
-                ></v-text-field>
-
-                <v-textarea
-                  v-model="orderForm.custom_text"
-                  label="Personalization Details"
-                  placeholder="What should I write? (e.g. A name, a quote, or special date)"
-                  rows="3"
-                  variant="outlined"
-                  auto-grow
-                  counter
-                  maxlength="200"
-                ></v-textarea>
-              </v-form>
-              
-              <div class="hidden-md-and-up pb-10"></div> <!-- Extra spacing for sticky button mobile -->
+              <!-- Cart quantity info if already in cart -->
+              <div v-if="selectedProductCartQty > 0" class="d-flex align-center pa-4 bg-grey-lighten-4 rounded-lg mb-6">
+                <v-icon color="secondary" class="mr-3">mdi-cart-check</v-icon>
+                <div>
+                  <div class="font-weight-bold text-body-2">Already in your cart</div>
+                  <div class="text-caption text-grey">Quantity: {{ selectedProductCartQty }}</div>
+                </div>
+              </div>
             </v-card-text>
 
-            <!-- Sticky/Fixed Footer for Action Button -->
+            <!-- Add to Cart Button -->
             <v-divider></v-divider>
             <div class="pa-4 pa-md-10 sticky-footer bg-surface shadow-top">
               <v-btn
                 block
                 color="primary"
                 size="x-large"
-                :loading="orderLoading"
-                @click="submitOrder"
+                @click="handleAddToCartFromDetail"
                 class="font-weight-bold text-subtitle-1 rounded-pill"
                 elevation="8"
               >
-                Confirm & Order via WhatsApp
-                <v-icon right class="ml-2">mdi-whatsapp</v-icon>
+                <v-icon start>mdi-cart-plus</v-icon>
+                Add to Cart
               </v-btn>
               <div class="text-caption text-center mt-3 text-grey">
-                Your order details will open in WhatsApp
+                Add items and checkout when you're ready
               </div>
             </div>
           </v-col>
         </v-row>
       </v-card>
     </v-dialog>
+
+    <!-- Cart Drawer -->
+    <CartDrawer
+      v-model="cartDrawerOpen"
+      @checkout="checkoutDialogOpen = true"
+    />
+
+    <!-- Checkout Dialog -->
+    <CheckoutDialog v-model="checkoutDialogOpen" />
+
+    <!-- Added to Cart Snackbar -->
+    <v-snackbar
+      v-model="addedSnackbar"
+      timeout="2000"
+      color="success"
+      location="bottom center"
+      class="mb-4"
+    >
+      <div class="d-flex align-center">
+        <v-icon start>mdi-check-circle</v-icon>
+        <span class="font-weight-medium">Added to cart!</span>
+      </div>
+      <template v-slot:actions>
+        <v-btn variant="text" size="small" @click="cartDrawerOpen = true; addedSnackbar = false">
+          View Cart
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-main>
 </template>
 
@@ -277,8 +290,12 @@ import { ref, computed, onMounted, inject } from 'vue'
 import { useTheme } from 'vuetify'
 import { SupabaseService } from '../services/SupabaseService'
 import { CONFIG } from '../config/constants'
+import { useCartStore } from '../stores/cart'
+import CartDrawer from '../components/CartDrawer.vue'
+import CheckoutDialog from '../components/CheckoutDialog.vue'
 
 const theme = useTheme()
+const cart = useCartStore()
 
 const toggleTheme = () => {
   theme.global.name.value = theme.global.name.value === 'luxuryTheme' ? 'luxuryDark' : 'luxuryTheme'
@@ -288,13 +305,12 @@ const products = ref([])
 const loading = ref(true)
 const dialog = ref(false)
 const selectedProduct = ref(null)
-const orderLoading = ref(false)
-const valid = ref(false)
-const form = ref(null)
 const searchQuery = ref('')
 const sortBy = ref('newest')
+const cartDrawerOpen = ref(false)
+const checkoutDialogOpen = ref(false)
+const addedSnackbar = ref(false)
 const showMessage = inject('showMessage')
-const setLoading = inject('setLoading')
 
 const sortOptions = [
   { title: 'Newest First', value: 'newest' },
@@ -303,18 +319,16 @@ const sortOptions = [
   { title: 'Name: A-Z', value: 'name_asc' }
 ]
 
-const orderForm = ref({
-  customer_name: '',
-  phone: '',
-  custom_text: '',
-  notes: ''
-})
-
 const fetchProducts = () => {
   loading.value = true
   SupabaseService.getProducts()
     .then((data) => {
       products.value = data
+      // Clean cart of any deactivated products
+      const removed = cart.removeInactiveProducts(data)
+      if (removed.length > 0) {
+        showMessage(`${removed.length} unavailable item(s) removed from cart`, 'warning')
+      }
     })
     .catch(() => {
       showMessage('Failed to load pieces', 'error')
@@ -347,58 +361,28 @@ const filteredProducts = computed(() => {
   return result
 })
 
-const openOrderDialog = (product) => {
+const openProductDetail = (product) => {
   selectedProduct.value = product
   dialog.value = true
 }
 
-const submitOrder = () => {
-  form.value.validate()
-    .then(({ valid: isFormValid }) => {
-      if (!isFormValid) return
+const selectedProductCartQty = computed(() => {
+  if (!selectedProduct.value) return 0
+  const item = cart.items.find(i => i.product_id === selectedProduct.value.id)
+  return item ? item.quantity : 0
+})
 
-      orderLoading.value = true
-      const orderData = {
-        ...orderForm.value,
-        product_id: selectedProduct.value.id,
-        product_name: selectedProduct.value.name,
-        price: selectedProduct.value.price,
-        status: 'pending'
-      }
+const handleAddToCart = (product) => {
+  cart.addToCart(product)
+  addedSnackbar.value = true
+}
 
-      SupabaseService.createOrder(orderData)
-        .then(() => {
-          showMessage('Order recorded! Redirecting to WhatsApp...')
-          
-          // Construct structured WhatsApp message
-          const message = `*NEW ORDER FROM THE Nafzz studio*
-------------------------------
-*Product:* ${selectedProduct.value.name}
-*Price:* ${CONFIG.CURRENCY_SYMBOL}${selectedProduct.value.price}
-*Custom Text:* ${orderForm.value.custom_text || 'Not specified'}
-------------------------------
-*Customer:* ${orderForm.value.customer_name}
-*Phone:* ${orderForm.value.phone}
-*Notes:* ${orderForm.value.notes || 'None'}
-------------------------------
-Please confirm my order. Thank you!`
-
-          const whatsappUrl = `https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`
-          
-          setTimeout(() => {
-            window.location.href = whatsappUrl
-            dialog.value = false
-            // Reset form
-            Object.keys(orderForm.value).forEach(key => orderForm.value[key] = '')
-          }, 1500)
-        })
-        .catch(() => {
-          showMessage('Error placing order. Please try again.', 'error')
-        })
-        .finally(() => {
-          orderLoading.value = false
-        })
-    })
+const handleAddToCartFromDetail = () => {
+  if (selectedProduct.value) {
+    cart.addToCart(selectedProduct.value)
+    addedSnackbar.value = true
+    dialog.value = false
+  }
 }
 
 onMounted(() => {
@@ -480,4 +464,3 @@ onMounted(() => {
   letter-spacing: 0.25em !important;
 }
 </style>
-

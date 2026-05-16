@@ -94,7 +94,7 @@
                 New Order from {{ order.customer_name }}
               </v-list-item-title>
               <v-list-item-subtitle class="text-caption">
-                {{ order.product_name }} • {{ CONFIG.CURRENCY_SYMBOL }}{{ order.price }}
+                {{ order.product_name }} • {{ CONFIG.CURRENCY_SYMBOL }}{{ order.total_amount || order.price }}
               </v-list-item-subtitle>
               <template v-slot:append>
                 <div class="text-right">
@@ -164,7 +164,7 @@ const setLoading = inject('setLoading')
 const totalRevenue = computed(() => {
   return orders.value
     .filter(o => o.status === 'completed')
-    .reduce((sum, o) => sum + parseFloat(o.price || 0), 0)
+    .reduce((sum, o) => sum + parseFloat(o.total_amount || o.price || 0), 0)
     .toLocaleString()
 })
 
