@@ -100,7 +100,7 @@
           :key="product.id" 
           cols="6" sm="6" md="4" lg="3"
         >
-          <v-card class="product-card group overflow-hidden" @click="openProductDetail(product)">
+          <v-card class="ds-surface-card product-card group overflow-hidden" @click="openProductDetail(product)">
             <div class="image-container overflow-hidden">
               <v-img
                 :src="product.image_url"
@@ -134,7 +134,7 @@
                 block
                 color="primary"
                 variant="flat"
-                class="mt-2 text-none"
+                class="mt-2 text-none ds-btn"
                 @click.stop="handleAddToCart(product)"
               >
                 <v-icon start>mdi-cart-plus</v-icon>
@@ -174,9 +174,9 @@
       v-model="dialog" 
       max-width="900" 
       transition="dialog-bottom-transition" 
-      content-class="product-detail-dialog"
+      content-class="product-detail-dialog ds-dialog"
     >
-      <v-card class="rounded-xl overflow-hidden product-modal-card">
+      <v-card class="ds-surface-card overflow-hidden product-modal-card">
         <!-- Absolute Close Button -->
         <v-btn
           icon="mdi-close"
@@ -206,8 +206,8 @@
           </v-col>
 
           <!-- Content Column -->
-          <v-col cols="12" md="6" class="d-flex flex-column modal-content-col bg-surface">
-            <v-card-text class="overflow-y-auto flex-grow-1 content-scroll-area pa-6 pa-md-10">
+          <v-col cols="12" md="6" class="safe-flex-column bg-surface">
+            <v-card-text class="safe-flex-scroll pa-6 pa-md-10">
               <div class="d-flex justify-space-between align-start mb-6">
                 <div>
                   <h2 class="luxury-font text-h4 mb-1 text-primary">{{ selectedProduct?.name }}</h2>
@@ -235,7 +235,7 @@
 
             <!-- Add to Cart Button -->
             <v-divider></v-divider>
-            <div class="pa-4 pa-md-10 sticky-footer bg-surface shadow-top">
+            <div class="pa-4 pa-md-10 bg-surface shadow-top flex-shrink-0">
               <v-btn
                 block
                 color="primary"
@@ -422,26 +422,18 @@ onMounted(() => {
 }
 
 .product-image-col {
-  height: 250px;
-  flex: 0 0 250px;
-}
-
-.modal-content-col {
-  flex: 1 1 auto;
-  min-height: 0; /* Important for internal scrolling */
-}
-
-.content-scroll-area {
-  background-attachment: local;
+  min-height: 300px;
+  flex: 0 0 auto;
 }
 
 @media (min-width: 960px) {
   .product-image-col {
-    height: 100%;
+    min-height: 100%;
     flex: 0 0 50%;
   }
   .product-modal-card {
-    height: 700px;
+    height: 80vh;
+    max-height: 700px;
   }
   .close-btn-fixed {
     background: rgba(255, 255, 255, 0.2) !important;

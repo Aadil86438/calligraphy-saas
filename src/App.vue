@@ -67,71 +67,123 @@ provide('setLoading', setLoading)
 </script>
 
 <style>
-/* Global luxury font or styling */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap');
+/* ==========================================================================
+   NAFZZ STUDIO - PREMIUM DESIGN SYSTEM (PHASE 1 ARCHITECTURE)
+   ========================================================================== */
 
-:root {
-  --v-theme-secondary: #D4AF37;
-}
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 
+/* --- TYPOGRAPHY SYSTEM --- */
 .v-application {
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: rgb(var(--v-theme-primary));
 }
 
-h1, h2, h3, h4, h5, .luxury-font {
+/* Restrict Playfair Display strictly to Primary Headings to reduce cognitive load */
+h1, h2, .luxury-font {
   font-family: 'Playfair Display', serif !important;
+  letter-spacing: -0.02em;
 }
 
+/* Functional typography utilities */
+.tracking-normal { letter-spacing: normal !important; }
+.tracking-tight { letter-spacing: -0.015em !important; }
+.tracking-widest { letter-spacing: 0.15em !important; text-transform: uppercase; }
+
+/* --- SURFACE & ELEVATION SYSTEM (Stripe/Linear Inspired) --- */
+.ds-surface-card {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgb(var(--v-theme-border-color));
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ds-surface-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Dialog surfaces require higher elevation */
+.ds-dialog .v-overlay__content > .v-card {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid rgb(var(--v-theme-border-color));
+}
+
+/* --- BUTTON SYSTEM --- */
+.ds-btn {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease !important;
+}
+.ds-btn:active {
+  transform: scale(0.98);
+}
+.ds-btn--primary {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+}
+
+/* --- TABLE SYSTEM --- */
+.ds-table {
+  border: 1px solid rgb(var(--v-theme-border-color));
+  border-radius: 12px;
+}
+.ds-table th {
+  font-weight: 600 !important;
+  color: rgb(var(--v-theme-primary), 0.7) !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgb(var(--v-theme-surface-variant)) !important;
+}
+
+/* --- LAYOUT PRIMITIVES (Responsive Safety) --- */
+/* Replace calc(100vh) with safe flex areas */
+.safe-flex-scroll {
+  flex: 1 1 auto;
+  min-height: 0; /* Crucial for nested flex scrolling */
+  overflow-y: auto;
+}
+
+.safe-flex-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* --- MICRO-INTERACTIONS & UTILITIES --- */
 /* Glassmorphism snackbar */
 .glass-snackbar .v-snackbar__wrapper {
-  background: rgb(var(--v-theme-surface), 0.8) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-  color: rgb(var(--v-theme-on-surface)) !important;
+  background: rgba(var(--v-theme-primary), 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgb(var(--v-theme-surface)) !important;
+  border-radius: 12px !important;
 }
 
-/* Global Loader Blur */
 .global-loader {
-  backdrop-filter: blur(8px);
-  background: rgb(var(--v-theme-background), 0.1) !important;
+  backdrop-filter: blur(4px);
+  background: rgba(var(--v-theme-background), 0.5) !important;
 }
 
-/* Micro-interactions */
-.v-btn {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.v-btn:hover {
-  transform: translateY(-2px);
-}
-
-.v-card {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-/* Custom Scrollbar */
+/* Custom minimal scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgb(var(--v-theme-surface));
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgb(var(--v-theme-secondary));
+  background: rgb(var(--v-theme-border-color));
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--v-theme-secondary), 0.8);
+  background: rgb(var(--v-theme-primary), 0.3);
 }
 
-/* Smooth Transitions */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.5s ease;
+  transition: opacity 0.3s ease;
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;

@@ -1,5 +1,5 @@
 <template>
-  <v-card class="digital-card group overflow-hidden" @click="$emit('view', product)">
+  <v-card class="ds-surface-card digital-card group overflow-hidden" @click="$emit('view', product)">
     <div class="image-container overflow-hidden position-relative">
       <v-img
         :src="product.preview_image_url"
@@ -25,11 +25,6 @@
         DIGITAL
       </v-chip>
 
-      <!-- PDF indicator -->
-      <div class="pdf-indicator">
-        <v-icon size="16" color="white">mdi-file-pdf-box</v-icon>
-        <span class="text-caption font-weight-bold text-white ml-1">PDF</span>
-      </div>
     </div>
 
     <v-card-text class="px-3 pt-4 pb-1">
@@ -40,7 +35,7 @@
         <span class="text-primary font-weight-bold text-h6">
           {{ CONFIG.CURRENCY_SYMBOL }}{{ product.price }}
         </span>
-        <v-chip size="x-small" color="info" variant="tonal">INSTANT</v-chip>
+        <v-chip size="x-small" color="info" variant="tonal">DIGITAL</v-chip>
       </div>
     </v-card-text>
 
@@ -49,11 +44,11 @@
         block
         color="info"
         variant="flat"
-        class="mt-1 text-none font-weight-bold"
+        class="mt-1 text-none font-weight-bold ds-btn"
         @click.stop="$emit('buy', product)"
       >
-        <v-icon start>mdi-flash</v-icon>
-        Buy Now — Instant Download
+        <v-icon start>mdi-whatsapp</v-icon>
+        Order on WhatsApp
       </v-btn>
     </v-card-actions>
   </v-card>
@@ -101,16 +96,5 @@ defineEmits(['view', 'buy'])
   letter-spacing: 0.5px;
 }
 
-.pdf-indicator {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  z-index: 2;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  border-radius: 8px;
-  padding: 4px 10px;
-  display: flex;
-  align-items: center;
-}
+
 </style>

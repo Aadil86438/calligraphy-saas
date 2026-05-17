@@ -10,7 +10,7 @@
   >
     <v-card class="rounded-xl overflow-hidden checkout-card">
       <!-- Header -->
-      <v-toolbar color="white" flat class="border-b px-2">
+      <v-toolbar color="white" flat class="border-b px-2 flex-shrink-0">
         <v-btn icon="mdi-close" variant="text" @click="closeDialog" :disabled="isProcessing"></v-btn>
         <v-toolbar-title class="luxury-font font-weight-bold">Checkout</v-toolbar-title>
         <v-spacer></v-spacer>
@@ -19,7 +19,7 @@
         </v-chip>
       </v-toolbar>
 
-      <v-card-text class="pa-0 overflow-y-auto" style="max-height: calc(100vh - 200px)">
+      <v-card-text class="pa-0 safe-flex-scroll">
         <!-- Order Summary -->
         <div class="pa-6 bg-surface-variant">
           <div class="luxury-font text-overline text-secondary font-weight-bold mb-3">ORDER SUMMARY</div>
@@ -109,7 +109,7 @@
 
       <!-- Action Footer -->
       <v-divider></v-divider>
-      <div class="pa-4 pa-md-6 bg-surface shadow-top">
+      <div class="pa-4 pa-md-6 bg-surface shadow-top flex-shrink-0">
         <v-btn
           block
           color="primary"

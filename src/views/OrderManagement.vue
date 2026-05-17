@@ -1,12 +1,12 @@
 <template>
   <v-container fluid class="pa-0">
     <!-- Orders Table -->
-    <v-card class="border-thin shadow-sm overflow-hidden" :loading="loading">
+    <v-card class="ds-surface-card overflow-hidden" :loading="loading">
       <div v-if="loading" class="pa-16 text-center">
         <v-progress-circular indeterminate color="primary"></v-progress-circular>
       </div>
       <div v-else class="overflow-x-auto">
-        <v-table hover class="orders-table">
+        <v-table hover class="orders-table ds-table">
           <thead class="bg-grey-lighten-4">
             <tr>
               <th style="width: 40px"></th>

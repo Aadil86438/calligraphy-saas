@@ -120,8 +120,8 @@
     </v-footer>
 
     <!-- Product Detail Dialog -->
-    <v-dialog v-model="detailDialog" max-width="900" transition="dialog-bottom-transition">
-      <v-card class="rounded-xl overflow-hidden">
+    <v-dialog v-model="detailDialog" max-width="900" transition="dialog-bottom-transition" content-class="ds-dialog">
+      <v-card class="ds-surface-card overflow-hidden product-modal-card">
         <v-btn
           icon="mdi-close"
           variant="tonal"
@@ -133,7 +133,7 @@
         ></v-btn>
 
         <v-row no-gutters class="fill-height flex-column flex-md-row overflow-hidden">
-          <v-col cols="12" md="6" class="bg-grey-lighten-4" style="min-height: 250px">
+          <v-col cols="12" md="6" class="bg-grey-lighten-4 product-image-col">
             <v-img :src="selectedProduct?.preview_image_url" height="100%" cover>
               <template v-slot:placeholder>
                 <v-row class="fill-height ma-0" align="center" justify="center">
@@ -143,37 +143,33 @@
             </v-img>
           </v-col>
 
-          <v-col cols="12" md="6" class="d-flex flex-column bg-surface">
-            <v-card-text class="overflow-y-auto flex-grow-1 pa-6 pa-md-10">
-              <v-chip color="info" variant="flat" size="small" class="mb-4" prepend-icon="mdi-download">
-                DIGITAL DOWNLOAD
+          <v-col cols="12" md="6" class="safe-flex-column bg-surface">
+            <v-card-text class="safe-flex-scroll pa-6 pa-md-10">
+              <v-chip color="info" variant="flat" size="small" class="mb-4">
+                DIGITAL PRODUCT
               </v-chip>
               <h2 class="luxury-font text-h4 mb-1 text-primary">{{ selectedProduct?.title }}</h2>
               <div class="text-h5 text-secondary font-weight-bold mb-6">
                 {{ CONFIG.CURRENCY_SYMBOL }}{{ selectedProduct?.price }}
               </div>
               <p class="text-body-1 text-grey-darken-1 mb-6">
-                {{ selectedProduct?.description || 'A premium digital product, available for instant download after payment.' }}
+                {{ selectedProduct?.description || 'A premium digital product. Manual delivery via WhatsApp after payment.' }}
               </p>
 
               <v-divider class="mb-6"></v-divider>
 
               <div class="d-flex align-center mb-3">
-                <v-icon color="success" class="mr-3" size="20">mdi-flash</v-icon>
-                <span class="text-body-2">Instant download after payment</span>
+                <v-icon color="success" class="mr-3" size="20">mdi-whatsapp</v-icon>
+                <span class="text-body-2">Order securely via WhatsApp</span>
               </div>
               <div class="d-flex align-center mb-3">
-                <v-icon color="info" class="mr-3" size="20">mdi-file-pdf-box</v-icon>
-                <span class="text-body-2">High-quality PDF format</span>
-              </div>
-              <div class="d-flex align-center mb-3">
-                <v-icon color="warning" class="mr-3" size="20">mdi-download-lock</v-icon>
-                <span class="text-body-2">{{ CONFIG.DIGITAL_DOWNLOAD_LIMIT }} secure downloads per purchase</span>
+                <v-icon color="info" class="mr-3" size="20">mdi-image-high-definition</v-icon>
+                <span class="text-body-2">Original high-res, watermark-free file delivered after payment</span>
               </div>
             </v-card-text>
 
             <v-divider></v-divider>
-            <div class="pa-4 pa-md-10">
+            <div class="pa-4 pa-md-10 flex-shrink-0 bg-surface">
               <v-btn
                 block
                 color="info"
@@ -182,8 +178,8 @@
                 class="font-weight-bold text-subtitle-1 rounded-pill"
                 elevation="8"
               >
-                <v-icon start>mdi-flash</v-icon>
-                Buy Now — {{ CONFIG.CURRENCY_SYMBOL }}{{ selectedProduct?.price }}
+                <v-icon start>mdi-whatsapp</v-icon>
+                Order on WhatsApp — {{ CONFIG.CURRENCY_SYMBOL }}{{ selectedProduct?.price }}
               </v-btn>
             </div>
           </v-col>
@@ -274,7 +270,7 @@ const openPurchaseFromDetail = () => {
 }
 
 const onPurchased = () => {
-  showMessage('Purchase complete! Your download is ready.', 'success')
+  showMessage('Redirecting to WhatsApp...', 'success')
 }
 
 onMounted(() => {
@@ -294,5 +290,29 @@ onMounted(() => {
 }
 .gap-4 {
   gap: 16px;
+}
+
+/* Dialog responsive layout primitives */
+.product-modal-card {
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-image-col {
+  min-height: 300px;
+  flex: 0 0 auto;
+}
+
+@media (min-width: 960px) {
+  .product-image-col {
+    min-height: 100%;
+    flex: 0 0 50%;
+  }
+  .product-modal-card {
+    height: 80vh;
+    max-height: 700px;
+  }
 }
 </style>

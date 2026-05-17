@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="pa-0">
     <!-- Search + Category Filter Bar -->
-    <v-card class="border-thin shadow-sm mb-6 pa-4">
+    <v-card class="ds-surface-card mb-6 pa-4">
       <v-row align="center" no-gutters>
         <v-col cols="12" sm="6" md="5">
           <v-text-field
@@ -27,12 +27,12 @@
     </v-card>
 
     <!-- Products Table -->
-    <v-card class="border-thin shadow-sm overflow-hidden" :loading="loading">
+    <v-card class="ds-surface-card overflow-hidden" :loading="loading">
       <div v-if="loading" class="pa-16 text-center">
         <v-progress-circular indeterminate color="primary"></v-progress-circular>
       </div>
       <div v-else class="overflow-x-auto">
-        <v-table hover class="products-table">
+        <v-table hover class="products-table ds-table">
           <thead class="bg-grey-lighten-4">
             <tr>
               <th class="font-weight-bold py-4" style="width: 70px">IMAGE</th>
@@ -107,15 +107,15 @@
     </v-card>
 
     <!-- Add/Edit Dialog -->
-    <v-dialog v-model="dialog" max-width="800" persistent transition="dialog-bottom-transition">
-      <v-card class="rounded-xl">
-        <v-toolbar color="white" class="px-4 border-b">
+    <v-dialog v-model="dialog" max-width="800" persistent transition="dialog-bottom-transition" content-class="ds-dialog">
+      <v-card class="ds-surface-card safe-flex-column" style="max-height: 90vh;">
+        <v-toolbar color="white" class="px-4 border-b flex-shrink-0">
           <v-toolbar-title class="luxury-font">{{ isEditing ? 'Edit Product' : 'New Product' }}</v-toolbar-title>
           <v-spacer></v-spacer>
           <v-btn icon="mdi-close" variant="text" @click="dialog = false"></v-btn>
         </v-toolbar>
 
-        <v-card-text class="pa-8">
+        <v-card-text class="pa-8 safe-flex-scroll">
           <v-form ref="form" v-model="valid">
             <v-row>
               <v-col cols="12" md="5">
@@ -176,7 +176,7 @@
           </v-form>
         </v-card-text>
 
-        <v-card-actions class="pa-8 pt-0">
+        <v-card-actions class="pa-8 pt-0 flex-shrink-0 bg-surface">
           <v-spacer></v-spacer>
           <v-btn variant="text" size="large" @click="dialog = false" class="mr-2">Cancel</v-btn>
           <v-btn

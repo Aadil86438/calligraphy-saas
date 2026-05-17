@@ -7,8 +7,9 @@
     width="400"
     class="cart-drawer"
   >
+  <div class="safe-flex-column">
     <!-- Header -->
-    <div class="pa-6 border-b d-flex align-center justify-space-between">
+    <div class="pa-6 border-b d-flex align-center justify-space-between flex-shrink-0">
       <div>
         <h3 class="luxury-font text-h6 text-primary">Your Cart</h3>
         <div class="text-caption text-grey">{{ cart.cartCount }} item{{ cart.cartCount !== 1 ? 's' : '' }}</div>
@@ -22,7 +23,7 @@
     </div>
 
     <!-- Cart Items -->
-    <div class="flex-grow-1 overflow-y-auto" style="height: calc(100vh - 240px)">
+    <div class="safe-flex-scroll">
       <!-- Empty State -->
       <div v-if="cart.isEmpty" class="text-center pa-16">
         <v-icon size="80" color="grey-lighten-2">mdi-cart-outline</v-icon>
@@ -102,7 +103,7 @@
     </div>
 
     <!-- Footer -->
-    <div v-if="!cart.isEmpty" class="pa-6 border-t bg-surface shadow-top">
+    <div v-if="!cart.isEmpty" class="pa-6 border-t bg-surface shadow-top flex-shrink-0">
       <div class="d-flex justify-space-between mb-4">
         <span class="text-grey-darken-1 font-weight-medium">Grand Total</span>
         <span class="text-h6 font-weight-bold text-primary">
@@ -130,6 +131,7 @@
       >
         Clear Cart
       </v-btn>
+    </div>
     </div>
   </v-navigation-drawer>
 </template>

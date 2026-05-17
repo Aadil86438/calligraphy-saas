@@ -1,27 +1,29 @@
-# SaaS Source of Truth Book
+# SaaS Source of Truth Book (Updated)
 
-This document serves as the COMPLETE, LOSSLESS, and REBUILDABLE Source of Truth for the `Nafzz studio` Calligraphy SaaS platform. It maps the exact state, business logic, and architectural design strictly derived from the provided codebase. 
+This document serves as the COMPLETE, LOSSLESS, and REBUILDABLE Source of Truth for the `Nafzz studio` Calligraphy SaaS platform. It maps the exact state, business logic, and architectural design strictly derived from the provided codebase.
 
 ---
 
 ## 1. SYSTEM OVERVIEW
 
 **Exact Purpose:**
-A bespoke E-commerce and SaaS platform designed for "Nafzz studio", allowing the business to showcase and sell handcrafted luxury calligraphy pieces. It features a public-facing storefront for customers to browse products and place personalized orders via a WhatsApp redirection flow. Concurrently, it offers a secure Admin Dashboard for the business owner to manage inventory (products), track orders in real-time, analyze performance metrics, and generate printable invoices.
+A bespoke hybrid E-commerce platform designed for "Nafzz studio". It operates on two distinct paradigms:
+1. **Physical Handcrafted Products:** A storefront with a multi-item cart system allowing customers to browse physical calligraphy pieces, bundle them into a cart, and place personalized orders via a WhatsApp redirection flow.
+2. **Digital Products (Secure Downloads):** A parallel automated storefront allowing customers to purchase digital assets (e.g., PDFs, workbooks) via manual UPI transactions. It includes a secure, rate-limited, and time-expiring download mechanism to prevent unauthorized sharing.
 
 **Core Features:**
-*   **Public Storefront:** A premium, responsive interface featuring dynamic theming (Light/Dark mode), real-time product listing, searching, and sorting mechanisms.
-*   **Order Placement System:** A specialized checkout flow where users provide personalization details (custom text) and their contact info, which records the order in the database and redirects the user to WhatsApp with a pre-formatted message.
-*   **Admin Authentication:** Secure login portal for the business owner.
-*   **Command Center (Admin Dashboard):** Real-time analytics, revenue tracking, and recent activity monitoring.
-*   **Product Inventory Management:** Full CRUD (Create, Read, Update, Delete) capabilities for products, including image uploads and soft-delete logic.
-*   **Order Tracking & Invoicing:** Table-based order management with status toggling (Pending/Completed) and a dedicated printable A4 invoice generation system.
+*   **Dual-Mode Public Storefront:** Two distinct customer interfaces (Physical vs Digital) featuring dynamic theming (Light/Dark mode) and real-time product listings.
+*   **Multi-Item Cart System (Physical):** Pinia-backed shopping cart allowing quantity adjustments, total calculations, and bundled WhatsApp checkouts.
+*   **Automated Digital Fulfillment (Digital):** Secure UPI verification flow, followed by rate-limited download links via signed URLs.
+*   **Admin Command Center:** Secure login portal for business owners featuring real-time analytics, revenue tracking across both physical and digital pipelines.
+*   **Inventory Management:** Full CRUD capabilities for physical products (soft deletes, image uploads) and digital products (PDF uploads to private buckets, cover images to public buckets).
+*   **Order Fulfillment Logs:** Real-time physical order tracking (pending/completed) with A4 printable invoices, alongside digital order management and IP-tracked download logs.
 
 **High-Level Architecture:**
-*   **Frontend:** A Single Page Application (SPA) built with Vue 3 (Composition API), Vite, Vue Router, and Vuetify 3 (for UI components and Material Design styling).
-*   **Backend/Database:** Serverless backend powered by Supabase. It utilizes Supabase PostgreSQL for relational data, Supabase Auth for identity management, and Supabase Storage for product images.
-*   **Real-time Layer:** Supabase real-time channels are utilized to synchronize product and order states dynamically across clients without requiring manual page refreshes.
-*   **Integrations:** WhatsApp web API (`wa.me`) for bridging the gap between web-order placement and direct business-to-customer communication.
+*   **Frontend:** A Single Page Application (SPA) built with Vue 3 (Composition API), Vite, Vue Router, Pinia (for Cart state), and Vuetify 3 (for UI components).
+*   **Backend/Database:** Serverless backend powered by Supabase. Utilizes Supabase PostgreSQL, Supabase Auth, and Supabase Storage (both Public and Private buckets).
+*   **Real-time Layer:** Supabase real-time channels synchronize physical products, physical orders, digital products, and digital orders dynamically across clients without refreshing.
+*   **Integrations:** WhatsApp web API (`wa.me`) for physical checkouts, and custom UPI string matching for digital products.
 
 ---
 
@@ -36,26 +38,38 @@ calligraphy-saas/
 ├── package.json                # Project metadata, scripts, and dependencies
 ├── vercel.json                 # Vercel deployment configuration
 ├── vite.config.js              # Vite bundler configuration
-├── public/                     # Public static assets (not detailed in code provided)
+├── digital_migration.sql       # Schema for digital product DB tables
+├── supabase_migration.sql      # Schema for physical cart/order_items DB tables
+├── public/                     # Public static assets
 └── src/                        # Core application source code
-    ├── main.js                 # App bootstrap, plugin registration (Router, Vuetify, Pinia)
+    ├── main.js                 # App bootstrap (Router, Vuetify, Pinia)
     ├── App.vue                 # Root Vue component, global layouts, snackbar, loader
-    ├── assets/                 # Local images/icons (hero.png, vite.svg)
+    ├── components/             # Reusable UI fragments
+    │   ├── CartDrawer.vue      # Slide-out shopping cart for physical items
+    │   ├── CheckoutDialog.vue  # Final checkout form for WhatsApp routing
+    │   ├── DigitalProductCard.vue # UI card for digital storefront
+    │   └── DigitalPurchaseDialog.vue # UPI checkout flow for digital items
     ├── config/                 # Configuration variables
-    │   └── constants.js        # Global app constants (WhatsApp #, Social URLs)
+    │   └── constants.js        # Global app constants (WhatsApp, UPI, Limits)
     ├── plugins/                # Vue plugins setup
-    │   └── vuetify.js          # Vuetify 3 theme definitions (Luxury themes)
+    │   └── vuetify.js          # Vuetify 3 theme definitions
     ├── router/                 # Vue Router configuration
     │   └── index.js            # Route definitions and auth guards
     ├── services/               # External API integrations
-    │   └── SupabaseService.js  # Supabase client wrapper (Auth, DB, Storage)
+    │   ├── SupabaseService.js  # Supabase client wrapper (Auth, Physical DB)
+    │   └── DigitalProductService.js # Isolated Supabase wrapper for Digital DB
+    ├── stores/                 # State management (Pinia)
+    │   └── cart.js             # Cart state (Items, Totals, LocalStorage sync)
     └── views/                  # Page-level Vue components
-        ├── AdminDashboard.vue  # Layout wrapper for admin section (Sidebar, Header)
+        ├── AdminDashboard.vue  # Layout wrapper for admin section
         ├── AdminLogin.vue      # Admin authentication page
-        ├── AdminOverview.vue   # Dashboard statistics and recent orders
-        ├── HomeView.vue        # Public storefront and order placement logic
-        ├── OrderManagement.vue # Admin table for tracking orders and printing invoices
-        └── ProductManagement.vue # Admin grid/table for inventory CRUD
+        ├── AdminOverview.vue   # Dashboard statistics
+        ├── DigitalOrderAdmin.vue # Admin table for digital transactions & logs
+        ├── DigitalProductAdmin.vue # Admin CRUD for digital inventory
+        ├── DigitalProducts.vue # Public storefront for digital items
+        ├── HomeView.vue        # Public storefront for physical items
+        ├── OrderManagement.vue # Admin table for physical orders & invoices
+        └── ProductManagement.vue # Admin CRUD for physical inventory
 ```
 
 ---
@@ -63,21 +77,18 @@ calligraphy-saas/
 ## 3. TECHNOLOGY STACK
 
 **Languages & Frameworks:**
-*   **Vue.js (`^3.5.30`)**: Core reactive frontend framework using the Composition API (`<script setup>`).
-*   **Vuetify (`^4.0.5`)**: Material Design component framework responsible for the UI, Grid system, and theming.
-*   **JavaScript (ES6+)**: Primary scripting language.
+*   **Vue.js (`^3.5.30`)**: Frontend framework (Composition API).
+*   **Vuetify (`^4.0.5`)**: Material Design component framework (UI, Grid, Theming).
 
 **Libraries:**
 *   **Vue Router (`^5.0.4`)**: Client-side routing.
-*   **Pinia (`^3.0.4`)**: State management (Installed and registered in `main.js`, but localized state via `Provide/Inject` is predominantly used instead).
-*   **Supabase JS Client (`^2.101.1`)**: Official SDK for interacting with Supabase services.
-*   **Material Design Icons (`@mdi/font ^7.4.47`)**: Iconography system.
+*   **Pinia (`^3.0.4`)**: State management (used specifically for the `cart.js` store, hydrated via LocalStorage).
+*   **Supabase JS Client (`^2.101.1`)**: Official SDK for Supabase services.
+*   **Material Design Icons (`@mdi/font ^7.4.47`)**: Iconography.
 
-**Build Tools & Environment:**
-*   **Vite (`^6.0.0`)**: Fast frontend build tool and development server.
-*   **Vite Vue Plugin (`@vitejs/plugin-vue ^5.2.1`)**: Vue SFC support for Vite.
+**Build Tools:**
+*   **Vite (`^6.0.0`)**: Build tool and dev server.
 *   **Sass (`^1.98.0`)**: CSS preprocessor.
-*   **Node.js**: Environment requirement for NPM and Vite.
 
 ---
 
@@ -86,312 +97,317 @@ calligraphy-saas/
 **Environment Variables (`.env`):**
 *   `VITE_SUPABASE_URL`: The Supabase project endpoint.
 *   `VITE_SUPABASE_ANON_KEY`: The public anonymous key for Supabase API access.
-*   *(Note: These are hardcoded in the codebase snapshot as `https://yprevigfgrbsemixzepa.supabase.co` and its corresponding JWT).*
 
 **App Constants (`src/config/constants.js`):**
-*   `CONFIG.WHATSAPP_NUMBER`: `'8643839796'`
-*   `CONFIG.CURRENCY_SYMBOL`: `'₹'`
-*   `CONFIG.YOUTUBE_URL`: `'https://youtube.com/@nafzzcalligraphy?si=0CQPGxebe-D4Y3QX'`
-*   `CONFIG.INSTAGRAM_URL`: `'https://instagram.com/@nafzzcalligraphy'`
-*   `CONFIG.APP_NAME`: `'Nafzz studio'`
+*   `WHATSAPP_NUMBER`: `'8643839796'`
+*   `CURRENCY_SYMBOL`: `'₹'`
+*   `APP_NAME`: `'Nafzz studio'`
+*   `UPI_ID`: `'mohammedadil3002@okhdfcbank'`
+*   `DIGITAL_DOWNLOAD_LIMIT`: `3`
+*   `SIGNED_URL_EXPIRY`: `60` (seconds)
 
 **Deployment Settings:**
-*   `vercel.json` exists in the root, indicating the project is configured/optimized for Vercel edge deployment.
+*   `vercel.json` implies the project is configured for Vercel edge deployment.
 
 ---
 
 ## 5. DATABASE & DATA MODELS
 
-Derived strictly from the queries in `SupabaseService.js`, the Supabase PostgreSQL database requires the following exact schema:
+Derived strictly from the migration files (`digital_migration.sql`, `supabase_migration.sql`) and Service abstractions.
 
+### Physical Commerce Schema
 **Table: `products`**
-*   `id`: Primary Key (Type: UUID or Auto-increment Int)
-*   `name`: Text/Varchar
+*   `id`: UUID (Primary Key)
+*   `name`: Text
 *   `description`: Text
-*   `price`: Numeric/Decimal
-*   `image_url`: Text (URL linking to Supabase Storage)
-*   `is_active`: Boolean (Used for soft-deletes)
-*   `created_at`: Timestamp (Used for sorting: `order('created_at', { ascending: false })`)
+*   `price`: Numeric
+*   `image_url`: Text (Storage URL)
+*   `is_active`: Boolean (Default `true`)
+*   `category`: Text (Default `'General'`)
+*   `created_at`: Timestamptz
 
 **Table: `orders`**
-*   `id`: Primary Key (Type: UUID expected due to `.slice(0, 8)` invoice logic)
-*   `customer_name`: Text/Varchar
-*   `phone`: Text/Varchar (WhatsApp number)
-*   `custom_text`: Text (Personalization details)
-*   `notes`: Text (Currently initialized in `HomeView.vue` but optional)
-*   `product_id`: Foreign Key linking to `products.id`
-*   `product_name`: Text/Varchar (Denormalized to prevent historical invoice corruption)
-*   `price`: Numeric/Decimal (Denormalized at time of purchase)
-*   `status`: Text (Values: `'pending'`, `'completed'`)
-*   `created_at`: Timestamp
+*   `id`: UUID (Primary Key)
+*   `customer_name`: Text
+*   `phone`: Text
+*   `custom_text`: Text
+*   `notes`: Text
+*   `product_id`: UUID (FK to products - Legacy fallback)
+*   `product_name`: Text (Legacy fallback)
+*   `price`: Numeric (Legacy fallback)
+*   `total_amount`: Numeric
+*   `status`: Text (`'pending'`, `'completed'`)
+*   `created_at`: Timestamptz
 
-**Storage Bucket:**
-*   A public bucket named `products` must exist to handle image uploads (`supabase.storage.from('products')`).
+**Table: `order_items` (New for Cart System)**
+*   `id`: UUID (Primary Key)
+*   `order_id`: UUID (FK to orders ON DELETE CASCADE)
+*   `product_id`: UUID (FK to products)
+*   `product_name`: Text
+*   `price`: Numeric
+*   `quantity`: Integer (Default 1)
+*   `subtotal`: Numeric
+*   `created_at`: Timestamptz
 
-**Database Features:**
-*   **Realtime**: The schema `public`, tables `products` and `orders` must have Supabase Realtime publication enabled for the `subscribeToProducts` and `subscribeToOrders` channel listeners to function.
+### Digital Commerce Schema
+**Table: `digital_products`**
+*   `id`: UUID (Primary Key)
+*   `title`: Text
+*   `description`: Text
+*   `price`: Numeric
+*   `preview_image_url`: Text
+*   `original_pdf_path`: Text (Internal path, not public URL)
+*   `product_type`: Text (Default `'digital'`)
+*   `is_active`: Boolean (Default `true`)
+*   `created_at`: Timestamptz
+
+**Table: `digital_orders`**
+*   `id`: UUID (Primary Key)
+*   `digital_product_id`: UUID (FK to digital_products)
+*   `customer_name`: Text
+*   `phone`: Text
+*   `transaction_id`: Text (UNIQUE, prevents double-spending)
+*   `amount`: Numeric
+*   `payment_status`: Text (Default `'self_confirmed'`)
+*   `download_enabled`: Boolean (Default `false`, though code sets to `true` on creation)
+*   `download_count`: Integer (Default 0)
+*   `download_limit`: Integer (Default 3)
+*   `created_at`: Timestamptz
+
+**Table: `digital_download_logs`**
+*   `id`: UUID (Primary Key)
+*   `digital_order_id`: UUID (FK to digital_orders ON DELETE CASCADE)
+*   `downloaded_at`: Timestamptz
+*   `ip_address`: Text
+*   `user_agent`: Text
+
+### Storage Buckets
+1.  **`products` (Public)**: Images for physical products.
+2.  **`digital-previews` (Public)**: Cover images for digital products.
+3.  **`digital-originals` (Private - CRITICAL)**: Stores actual PDF files. Must NOT be public. Accessible only via Signed URLs.
 
 ---
 
 ## 6. BACKEND LOGIC
 
-Backend logic is entirely outsourced to Supabase via the `SupabaseService.js` abstraction layer.
+Backend logic is abstracted into two services: `SupabaseService.js` and `DigitalProductService.js`.
 
-**Authentication:**
-*   `login(email, password)`: Uses `supabase.auth.signInWithPassword`.
-*   `logout()`: Uses `supabase.auth.signOut`.
-*   `getUser()`: Uses `supabase.auth.getUser` to return the active session user.
+**Physical Orders (`SupabaseService.js`):**
+*   `createOrderWithItems(order, items)`: Atomically inserts an order and its associated `order_items`. Handles cleanup if item insertion fails.
+*   `getOrdersWithItems()`: Fetches orders joined with their items (`select('*, order_items(*)')`).
+*   Soft-delete logic on `products` is maintained to preserve historical `order_items` references.
 
-**Product APIs:**
-*   `getProducts()`: Fetches only active products (`eq('is_active', true)`). Used on the public storefront.
-*   `getAllProducts()`: Fetches ALL products (active and inactive). Used in the Admin dashboard.
-*   `createProduct(product)`: Inserts a new row into `products`.
-*   `updateProduct(id, updates)`: Updates an existing product row.
-*   `deleteProduct(id)`: Performs a **Soft Delete** by setting `is_active: false`. (This prevents breaking existing orders that rely on the product).
-*   `uploadProductImage(file)`: Generates a random filename (`Math.random()`), uploads to `product-images/` directory in the `products` bucket, and retrieves the public URL.
+**Digital Orders (`DigitalProductService.js`):**
+*   `createDigitalOrder(order)`: Implements double-spend protection by explicitly querying `checkDuplicateTransaction(transactionId)`. If a duplicate is found, throws an error.
+*   `uploadOriginalPdf(file)`: Uploads to the private `digital-originals` bucket and returns ONLY the internal path.
+*   `processDownload(orderId)` (CRITICAL SECURITY):
+    1. Fetches the order and validates `download_enabled`.
+    2. Validates `download_count` against `download_limit` (Constant: 3).
+    3. Calls Supabase `createSignedUrl` using the `original_pdf_path` with an expiry of 60 seconds.
+    4. Increments the `download_count`.
+    5. Inserts an audit log into `digital_download_logs` capturing the User-Agent.
 
-**Order APIs:**
-*   `createOrder(order)`: Inserts a new row into `orders`.
-*   `getOrders()`: Fetches all orders, sorted newest first.
-*   `updateOrderStatus(id, status)`: Updates the `status` column of an order.
-
-**Real-time Logic:**
-*   `subscribeToProducts(callback)` and `subscribeToOrders(callback)` open websocket channels to listen for `postgres_changes` on `INSERT`, `UPDATE`, and `DELETE` events.
+**Real-time Subscriptions:**
+Four websocket channels exist: `products`, `orders`, `digital_products`, `digital_orders`, all listening to `postgres_changes`.
 
 ---
 
 ## 7. FRONTEND LOGIC
 
-**Global State & Injection:**
-Instead of Pinia, global UI state (loading overlays, snackbar notifications) is managed centrally in `App.vue` using Vue's `provide/inject` API. `showMessage(text, color)` and `setLoading(boolean)` are injected into all child components.
+**State Management (Pinia - `src/stores/cart.js`):**
+*   Tracks physical product selections.
+*   Calculates `cartCount` and `cartTotal`.
+*   Hydrates state from `localStorage('nafzzCart')` on initialization and watches for changes.
+*   Implements `removeInactiveProducts(activeProducts)` to scrub carts of items an Admin soft-deletes.
 
 **Routing Logic (`src/router/index.js`):**
-*   `/`: Public Home.
-*   `/admin/login`: Admin Login.
-*   `/admin`: Parent Admin Dashboard Route (Requires Auth).
-    *   `/admin` (default child): `AdminOverview.vue`
-    *   `/admin/products`: `ProductManagement.vue`
-    *   `/admin/orders`: `OrderManagement.vue`
-*   **Navigation Guard:** `router.beforeEach` intercepts routes with `meta: { requiresAuth: true }`. It calls `SupabaseService.getUser()`. If no user exists, it redirects to `/admin/login`.
+*   `/`: Physical Home.
+*   `/digital`: Digital Products Home.
+*   `/admin/login`: Auth gate.
+*   `/admin`: Dashboard Wrapper (Requires Auth). Sub-routes (`products`, `orders`) redirect to `/admin` where Vuetify Tabs handle local view swapping.
 
-**UI Flows & State Management:**
-1.  **Public Browsing (`HomeView.vue`)**:
-    *   Fetches active products. Uses computed properties to handle Search (`searchQuery`) and Sorting (`sortBy`: newest, price_asc, price_desc, name_asc).
-    *   Theming is toggled via `useTheme()` from Vuetify, flipping between `luxuryTheme` and `luxuryDark`.
-2.  **Admin Login (`AdminLogin.vue`)**: Forms submit to `SupabaseService.login`. On success, redirects to `/admin`.
-3.  **Dashboard Shell (`AdminDashboard.vue`)**: Provides the sidebar navigation and dynamic breadcrumb generation based on `route.path`.
-4.  **Analytics (`AdminOverview.vue`)**: Computes `totalRevenue` from orders where `status === 'completed'`. Identifies `pendingOrders` and `uniqueCustomers` based on phone numbers.
-5.  **Inventory (`ProductManagement.vue`)**: Toggles between table and grid view. Handles image upload base64 preview via `FileReader` before uploading the raw file to Supabase.
-6.  **Orders & Invoicing (`OrderManagement.vue`)**: Tracks orders. Allows inline status updates via `v-select`. Contains an HTML/CSS printable invoice interface mapped strictly to A4 dimensions (`210mm x 297mm`) using `@media print` rules to hide the rest of the application.
+**UI Flows:**
+1.  **Physical Cart Flow (`HomeView.vue` + `CartDrawer.vue` + `CheckoutDialog.vue`)**: Users add items to the Pinia cart. The cart drawer displays subtotals. Clicking checkout opens the `CheckoutDialog`, captures Name/Phone/Notes, writes to the DB via `createOrderWithItems`, clears the cart, and redirects to WhatsApp via URI encoding.
+2.  **Digital Purchase Flow (`DigitalProducts.vue` + `DigitalPurchaseDialog.vue`)**: User selects a digital item. Dialog shows UPI details (QR not in code, implies manual entry). User inputs their Name, Phone, and the 12-digit UPI Transaction ID. DB verifies uniqueness. Success grants immediate download access.
+3.  **Admin Tabs (`AdminDashboard.vue`)**: Admin interface uses `v-window`/`v-tabs` to seamlessly switch between: Overview, Physical Inventory, Physical Orders, Digital Inventory, and Digital Orders.
 
 ---
 
 ## 8. INTEGRATIONS
 
-**WhatsApp Integration:**
-The application relies on WhatsApp for the final checkout conversion.
-In `HomeView.vue`, `submitOrder()` creates a database record, then constructs a multi-line formatted string containing the product name, price, custom text, customer name, phone, and notes.
-It encodes this string using `encodeURIComponent(message)` and redirects the user via `window.location.href = https://wa.me/{CONFIG.WHATSAPP_NUMBER}?text={encoded}`.
+**WhatsApp Integration (Physical):**
+*   Constructs a multi-line string iterating through `cart.items`, appending Subtotals and Grand Total.
+*   Redirects via `https://wa.me/{CONFIG.WHATSAPP_NUMBER}?text={encoded}`.
+
+**UPI System (Digital):**
+*   A fully manual validation loop. The customer is shown `CONFIG.UPI_ID`. They pay on their own app, find the UTR/Transaction ID, and paste it. The system trusts this ID, logging it into the DB (enforced UNIQUE). Admin later cross-references their bank statements.
 
 ---
 
 ## 9. AUTHENTICATION & SECURITY
 
-*   **Session Handling**: Token/session handling is intrinsically managed by `@supabase/supabase-js` within `localStorage`.
-*   **Security Measures**: 
-    *   Vue Router Navigation Guards prevent unauthorized access to `/admin/*`.
-    *   Supabase Row Level Security (RLS) is heavily implied, though defined in the backend, not the codebase. To rebuild, RLS must protect `INSERT/UPDATE/DELETE` on `products` and `orders` restricting them to authenticated users, while allowing public `INSERT` on `orders` and `SELECT` on `products`.
-*   **Data Integrity**: Deleting a product uses a "Soft Delete" (`is_active: false`) instead of a destructive `DELETE` query to maintain relational integrity for historical orders.
+*   **Admin Auth**: Managed by `@supabase/supabase-js`.
+*   **Signed URLs**: Digital PDF downloads are strictly gated. The browser NEVER knows the permanent URL of the PDF. The frontend requests a download, backend (`processDownload`) mints a 60-second expiring URL, and redirects the browser.
+*   **Row Level Security (RLS)**: Enforced via the `.sql` migration files.
+    *   `digital_products`: Select is public, mutations require Auth.
+    *   `digital_orders`: Insert is public, Select/Update requires Auth (or public if policies allow, but primarily used by admin).
+    *   `digital_download_logs`: Insert public, Select Auth.
+*   **Idempotency**: SQL migrations are wrapped in `IF NOT EXISTS` or `DO $$ BEGIN` blocks to allow safe re-runs.
 
 ---
 
 ## 10. DEPLOYMENT & INFRASTRUCTURE
 
-*   **Hosting Assumptions**: Optimized for static web app hosting (Vercel, Netlify, GitHub Pages). `vercel.json` implies Vercel.
-*   **Build Steps**: 
-    1. `npm install`
-    2. Setup `.env` variables
-    3. `npm run build`
-    4. Serve the `/dist` output directory.
-*   **Scaling Logic**: Scaling relies entirely on Supabase's managed infrastructure and real-time socket connections. The frontend is fully stateless aside from localStorage session tokens.
+*   **Hosting**: Vercel/Netlify optimized (Static output).
+*   **Database**: Supabase PostgreSQL.
+*   **Storage Setup Requirements**: The admin MUST manually create `digital-previews` (PUBLIC) and `digital-originals` (PRIVATE) in the Supabase dashboard as defined in `digital_migration.sql`.
 
 ---
 
 ## 11. BUSINESS LOGIC (CORE VALUE)
 
-**Step-by-Step User Journey (Internal Execution Path):**
-1.  **Discovery**: Customer visits `/`. `fetchProducts()` fires, calling `SupabaseService.getProducts()`. Real-time socket `subscribeToProducts()` is opened.
-2.  **Selection**: Customer clicks a product card, triggering `openOrderDialog(product)`. `selectedProduct` ref is populated.
-3.  **Personalization**: Customer fills `orderForm` (Name, WhatsApp, Custom Text).
-4.  **Submission**: Customer clicks "Confirm & Order".
-    *   `form.validate()` runs.
-    *   `orderData` payload is constructed, freezing `price` and `product_name` at current values.
-    *   `SupabaseService.createOrder()` writes to the database (`status: 'pending'`).
-    *   A timeout of 1500ms allows the UI to show a success snackbar.
-    *   `window.location.href` fires, opening WhatsApp Web/App.
-5.  **Fulfillment**: Admin views `/admin/orders`. The real-time listener `subscribeToOrders()` automatically injects the new order into the table. Admin reviews the custom text, executes the calligraphy physical work, updates the `status` to `completed` in the UI (firing `updateOrderStatus`), and generates a print/PDF invoice.
+**User Journey (Physical - Multi-Item):**
+1. User visits `/`. Adds multiple items to Cart (Pinia state updates, LocalStorage syncs).
+2. User opens Cart Drawer, reviews totals, proceeds to Checkout.
+3. User enters contact info. `createOrderWithItems` fires atomically.
+4. User redirected to WhatsApp with formatted receipt. Admin fulfills manually.
+
+**User Journey (Digital - Instant Download):**
+1. User visits `/digital`. Clicks "Buy Now" on a workbook.
+2. Dialog shows UPI ID. User pays via external app (GPay/PhonePe).
+3. User types the 12-digit UPI ID into the site and submits.
+4. System validates the ID is not a duplicate. Creates `digital_order`.
+5. User is shown a "Download Now" button.
+6. Clicking triggers `processDownload()`. Server verifies limits (<3), logs the IP/Agent, mints a 60s Signed URL, and downloads the PDF directly to the user's device.
 
 ---
 
 ## 12. EDGE CASES & LIMITATIONS
 
-**Found in Code:**
-*   **Missing Validations**: The WhatsApp phone number field (`orderForm.phone`) relies solely on `[v => !!v || 'WhatsApp number is required']`. It does not validate numeric formatting, length, or country codes.
-*   **Image Uploads**: `uploadProductImage` does not compress images or enforce file size limits natively on the frontend. It assumes the user uploads web-friendly files.
-*   **Order Abandonment**: The order is recorded in the DB *before* the WhatsApp redirect. If the user closes the WhatsApp prompt without sending the message, the admin still sees a `pending` order in the dashboard but receives no WhatsApp message.
-*   **Pagination**: `getAllProducts()` and `getOrders()` do not utilize Supabase pagination (`.range()`). For thousands of orders, the Admin dashboard will attempt to load the entire dataset into memory, which is a potential scaling failure point.
+*   **Cart Integrity vs DB State**: If an admin deletes a product while it is in a user's `localStorage` cart, the cart will display a dead item until `removeInactiveProducts` scrubs it upon a fresh product fetch.
+*   **Digital Download Limits**: Fixed at 3 downloads per order to prevent URL sharing. If a user fails the download 3 times, they are permanently locked out and must contact support (WhatsApp).
+*   **Transaction ID Guessing**: The system relies on the uniqueness of the UPI ID. If a user inputs a fake but unique ID, they will receive the download for free. The Admin must manually reconcile bank statements against the `digital_orders` table and revoke access/contact the user if fraudulent.
+*   **Client-side IP Logging**: The `digital_download_logs` table logs `ip_address: 'client'` because Supabase JS client runs in the browser. True IP tracking requires an Edge Function or server-side middleware, which is absent here.
 
 ---
 
 ## 13. REBUILD GUIDE (CRITICAL)
 
-To recreate this exact SaaS from scratch without the code, follow these exact steps:
+To recreate this exact SaaS without the code:
 
-**Phase 1: Backend Setup (Supabase)**
-1.  Create a new Supabase project.
-2.  **Database Schema:**
-    *   Create `products` table: `id` (uuid, default uuid_generate_v4()), `name` (text), `description` (text), `price` (numeric), `image_url` (text), `is_active` (boolean, default true), `created_at` (timestamptz, default now()).
-    *   Create `orders` table: `id` (uuid), `customer_name` (text), `phone` (text), `custom_text` (text), `notes` (text), `product_id` (uuid, FK to products.id), `product_name` (text), `price` (numeric), `status` (text, default 'pending'), `created_at` (timestamptz).
-3.  **Storage:** Create a public bucket named `products`.
-4.  **Realtime:** Go to Database -> Replication -> Enable `products` and `orders` for public schema.
-5.  **Auth / RLS:** 
-    *   Enable Email/Password Auth. Create an admin user.
-    *   Set RLS on `products`: `SELECT` is public. `INSERT/UPDATE/DELETE` requires authentication.
-    *   Set RLS on `orders`: `INSERT` is public. `SELECT/UPDATE/DELETE` requires authentication.
+**Phase 1: Backend Infrastructure (Supabase)**
+1.  Create a project. Enable Auth (Email/Password).
+2.  Execute `supabase_migration.sql` (Creates `order_items`, updates `orders`/`products`, sets RLS).
+3.  Execute `digital_migration.sql` (Creates `digital_products`, `digital_orders`, `digital_download_logs`, sets RLS).
+4.  Create Storage Buckets:
+    *   `products` (Public)
+    *   `digital-previews` (Public)
+    *   `digital-originals` (PRIVATE - Do not tick the public box).
+5.  Enable Realtime publication for: `products`, `orders`, `order_items`, `digital_products`, `digital_orders`.
 
-**Phase 2: Frontend Scaffolding**
-1.  Run `npm create vite@latest calligraphy-saas -- --template vue`
-2.  Install dependencies: `npm install vue-router@4 pinia vuetify@3 @mdi/font @supabase/supabase-js sass`
-3.  Initialize Vuetify in `src/plugins/vuetify.js` exactly matching the `luxuryTheme` and `luxuryDark` color palettes (Primary: `#1A1A1A`, Secondary: `#D4AF37`).
+**Phase 2: Frontend Environment**
+1.  `npm create vite@latest calligraphy-saas -- --template vue`
+2.  `npm install vue-router@4 pinia vuetify@3 @mdi/font @supabase/supabase-js sass`
+3.  Populate `.env` with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 
-**Phase 3: Code Implementation Order**
-1.  **Constants:** Create `src/config/constants.js` with WhatsApp number and App Name.
-2.  **Supabase Service:** Implement `src/services/SupabaseService.js` handling the exact DB abstractions.
-3.  **Router:** Setup `src/router/index.js` with the specific routes and the `requiresAuth` navigation guard hooked to Supabase.
-4.  **Global Shell:** Modify `App.vue` to Provide `showMessage` and `setLoading`, and include `<router-view />`, the global loader blur, and the glassmorphism snackbar.
-5.  **Admin Views:** Implement `AdminDashboard.vue` layout. Build `AdminLogin.vue`. Build `ProductManagement.vue` (Table/Grid toggle, Dialog with FileReader image preview). Build `OrderManagement.vue` (Table, Status V-Select, A4 Print Invoice Dialog). Build `AdminOverview.vue` (Metric calculations).
-6.  **Public Storefront:** Implement `HomeView.vue`. Map the grid to active products, implement the Order Dialog, and construct the WhatsApp URI redirect logic inside `submitOrder()`.
+**Phase 3: Code Scaffolding**
+1.  Initialize Vuetify (`plugins/vuetify.js`) and Pinia (`main.js`).
+2.  Implement `src/config/constants.js` with UPI, WhatsApp, and Limit constants.
+3.  Implement `src/services/SupabaseService.js` (Physical) and `src/services/DigitalProductService.js` (Digital) adhering to the RPC signatures documented above.
+4.  Implement `src/stores/cart.js` (Pinia + LocalStorage watcher).
+5.  Build UI components (`CartDrawer.vue`, `CheckoutDialog.vue`, `DigitalPurchaseDialog.vue`).
+6.  Assemble Views and map to `vue-router`.
 
 ---
 
 ## 14. FILE-BY-FILE DEEP DIVE
 
-*   **`vite.config.js`**
-    *   *Purpose:* Bundler configuration.
-    *   *Role:* Loads the `@vitejs/plugin-vue` to allow `.vue` files to be compiled into standard JS/CSS.
-*   **`src/main.js`**
-    *   *Purpose:* Application entry point.
-    *   *Role:* Instantiates the Vue app (`createApp`), mounts Vuetify, Vue Router, and Pinia, and attaches them to the `#app` DOM node.
-*   **`src/App.vue`**
-    *   *Purpose:* Root component and global layout provider.
-    *   *Role:* Contains `<router-view />`. Manages a global `v-overlay` for loading states and a `v-snackbar` for success/error alerts. Provides these methods via `provide()` to child components. Establishes global CSS variables, custom scrollbars, and luxury fonts (`Playfair Display`, `Outfit`).
-*   **`src/router/index.js`**
-    *   *Purpose:* Navigation controller.
-    *   *Role:* Defines path-to-component mappings. Implements the `beforeEach` auth guard using `SupabaseService.getUser()`.
-*   **`src/config/constants.js`**
-    *   *Purpose:* Environment agnostic configuration.
-    *   *Role:* Centralizes hardcoded business variables (`CONFIG.WHATSAPP_NUMBER`, URLs) to prevent magic strings.
-*   **`src/plugins/vuetify.js`**
-    *   *Purpose:* UI Framework definition.
-    *   *Role:* Defines the visual identity of the SaaS. Sets up `luxuryTheme` (light) and `luxuryDark` (dark). Establishes default component behaviors (e.g., `VCard` flat with subtle borders, `VTextField` outlined).
-*   **`src/services/SupabaseService.js`**
-    *   *Purpose:* Backend abstraction.
-    *   *Role:* Connects to Supabase via ENV vars. Exposes all necessary DB/Auth/Storage methods. Returns Promises for consumption by UI components.
-*   **`src/views/HomeView.vue`**
-    *   *Purpose:* Public storefront.
-    *   *Key Functions:* `fetchProducts()`, `filteredProducts` (Computed logic for search/sort), `submitOrder()` (DB write + WhatsApp URI redirect payload generation).
-*   **`src/views/AdminLogin.vue`**
-    *   *Purpose:* Auth gatekeeper.
-    *   *Role:* A simple card layout capturing email/password.
+*   **`src/stores/cart.js`**
+    *   *Purpose:* Centralized physical cart state.
+    *   *Key Functions:* `hydrate` (try/catch localStorage), `watch` (persist changes), `addToCart`, `removeInactiveProducts` (integrity check).
+*   **`src/services/DigitalProductService.js`**
+    *   *Purpose:* Dedicated boundary for digital data.
+    *   *Key Functions:* `checkDuplicateTransaction` (Unique DB check), `uploadOriginalPdf` (returns path, NOT URL), `processDownload` (Atomic check of limit -> createSignedUrl -> log download).
+*   **`digital_migration.sql` & `supabase_migration.sql`**
+    *   *Purpose:* Source of truth for database schema and security (RLS).
+    *   *Role:* Idempotent setup scripts ensuring tables, relationships (Cascades), and realtime hooks exist.
+*   **`src/components/CheckoutDialog.vue`**
+    *   *Purpose:* Finalizes physical orders.
+    *   *Role:* Collects user info, calculates total from Pinia, triggers atomic DB write, maps order lines into WhatsApp string.
+*   **`src/components/DigitalPurchaseDialog.vue`**
+    *   *Purpose:* Digital storefront checkout.
+    *   *Role:* Validates 12-digit UPI, manages the transition from "Purchase" to "Download" states, displays download limit countdown.
 *   **`src/views/AdminDashboard.vue`**
-    *   *Purpose:* Admin Layout Shell.
-    *   *Role:* Provides the sidebar (`v-navigation-drawer`) and top header for the Admin portal. Computes dynamic breadcrumbs based on the router path.
-*   **`src/views/AdminOverview.vue`**
-    *   *Purpose:* Business Intelligence Dashboard.
-    *   *Role:* Aggregates data. `totalRevenue` is calculated locally via `.reduce()`. Subscribes to real-time events to keep metrics live.
-*   **`src/views/ProductManagement.vue`**
-    *   *Purpose:* Inventory CRUD logic.
-    *   *Key Functions:* `onFileChange` (FileReader preview), `saveProduct` (Uploads image if changed, then creates/updates record), `deleteProduct` (Soft delete toggle).
-*   **`src/views/OrderManagement.vue`**
-    *   *Purpose:* Order fulfillment logic.
-    *   *Key Functions:* `updateStatus` (toggles between pending/completed). Contains a massive hidden HTML block (`#invoice-print-area`) designed precisely for `@media print` physical A4 printing.
+    *   *Purpose:* Unified command center.
+    *   *Role:* Uses `v-tabs` (`admin-tabs`) to navigate between Overview, Physical Products, Physical Orders, Digital Products, Digital Orders without changing the router path.
 
 ---
 
 ## 15. RAW CODE REFERENCES
 
-**Core Algorithm 1: WhatsApp Redirect Logic (`HomeView.vue`)**
+**Core Algorithm 1: Atomic Multi-Item Order (`SupabaseService.js`)**
 ```javascript
-const submitOrder = () => {
-  // ... validation and Supabase DB insert logic ...
-  SupabaseService.createOrder(orderData).then(() => {
-    // Construct structured WhatsApp message
-    const message = `*NEW ORDER FROM THE Nafzz studio*
-------------------------------
-*Product:* ${selectedProduct.value.name}
-*Price:* ${CONFIG.CURRENCY_SYMBOL}${selectedProduct.value.price}
-*Custom Text:* ${orderForm.value.custom_text || 'Not specified'}
-------------------------------
-*Customer:* ${orderForm.value.customer_name}
-*Phone:* ${orderForm.value.phone}
-*Notes:* ${orderForm.value.notes || 'None'}
-------------------------------
-Please confirm my order. Thank you!`
+async createOrderWithItems(order, items) {
+  const { data: orderData, error: orderError } = await supabase
+    .from('orders')
+    .insert([order])
+    .select()
 
-    const whatsappUrl = `https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`
-    
-    setTimeout(() => {
-      window.location.href = whatsappUrl
-      dialog.value = false
-    }, 1500)
-  })
+  if (orderError) throw orderError
+  const createdOrder = orderData[0]
+
+  const itemsWithOrderId = items.map(item => ({
+    ...item,
+    order_id: createdOrder.id
+  }))
+
+  const { error: itemsError } = await supabase
+    .from('order_items')
+    .insert(itemsWithOrderId)
+
+  if (itemsError) {
+    await supabase.from('orders').delete().eq('id', createdOrder.id) // Cleanup on fail
+    throw itemsError
+  }
+  return createdOrder
 }
 ```
 
-**Core Algorithm 2: Dynamic Sorting & Filtering (`HomeView.vue`)**
+**Core Security 1: Rate-Limited Secure Download (`DigitalProductService.js`)**
 ```javascript
-const filteredProducts = computed(() => {
-  let result = products.value
+async processDownload(orderId) {
+  const { data: order } = await supabase.from('digital_orders')
+    .select('*, digital_products(original_pdf_path, title)').eq('id', orderId).single()
 
-  // Search
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter(p => 
-      p.name.toLowerCase().includes(query) || 
-      p.description?.toLowerCase().includes(query)
-    )
+  if (order.download_count >= order.download_limit) {
+    throw new Error(`Download limit reached`)
   }
 
-  // Sort
-  result = [...result].sort((a, b) => {
-    if (sortBy.value === 'price_asc') return a.price - b.price
-    if (sortBy.value === 'price_desc') return b.price - a.price
-    if (sortBy.value === 'name_asc') return a.name.localeCompare(b.name)
-    return new Date(b.created_at) - new Date(a.created_at)
-  })
+  const signedUrl = await this.getDownloadUrl(order.digital_products.original_pdf_path)
 
-  return result
-})
+  await supabase.from('digital_orders')
+    .update({ download_count: order.download_count + 1 }).eq('id', orderId)
+
+  await supabase.from('digital_download_logs')
+    .insert([{ digital_order_id: orderId, ip_address: 'client', user_agent: navigator.userAgent }])
+
+  return { signedUrl, fileName: order.digital_products.title, remainingDownloads: order.download_limit - order.download_count - 1 }
+}
 ```
 
-**Core DB Logic: Real-time Listener (`SupabaseService.js`)**
+**Core Algorithm 2: Pinia LocalStorage Sync (`cart.js`)**
 ```javascript
-  subscribeToProducts(callback) {
-    return supabase
-      .channel('public:products')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, callback)
-      .subscribe()
+// Hydrate
+try {
+  const saved = localStorage.getItem('nafzzCart')
+  if (saved) {
+    const parsed = JSON.parse(saved)
+    if (Array.isArray(parsed)) items.value = parsed
   }
-```
+} catch { localStorage.removeItem('nafzzCart') }
 
-**Core Architecture: Soft Delete (`SupabaseService.js`)**
-```javascript
-  deleteProduct(id) {
-    return supabase
-      .from('products')
-      .update({ is_active: false }) // Explicitly setting active to false rather than destroying row
-      .eq('id', id)
-      .select()
-      // ...
-  }
+// Persist
+watch(items, (val) => {
+  try { localStorage.setItem('nafzzCart', JSON.stringify(val)) } catch {}
+}, { deep: true })
 ```

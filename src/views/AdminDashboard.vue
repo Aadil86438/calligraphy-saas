@@ -82,7 +82,7 @@
       </v-avatar>
     </v-app-bar>
 
-    <v-main class="bg-grey-lighten-5 min-vh-100">
+    <v-main class="bg-background min-vh-100">
       <v-container fluid class="pa-4 pa-md-8">
         <!-- Admin Header -->
         <div class="d-flex align-center justify-space-between mb-6">
@@ -95,7 +95,7 @@
             color="primary"
             prepend-icon="mdi-plus"
             size="large"
-            class="elevation-2 hidden-xs"
+            class="ds-btn hidden-xs"
             @click="triggerAdd"
           >
             Add {{ activeTab === 'products' ? 'Product' : 'Digital Art' }}
@@ -126,10 +126,6 @@
             <v-icon start>mdi-file-document-outline</v-icon>
             Digital
           </v-tab>
-          <v-tab value="digital_orders" class="text-none font-weight-bold">
-            <v-icon start>mdi-download-outline</v-icon>
-            Digital Orders
-          </v-tab>
         </v-tabs>
 
         <!-- Tab Content -->
@@ -146,9 +142,6 @@
           <v-window-item value="digital">
             <DigitalProductAdmin :show-add-dialog="showAddDigital" @dialog-closed="showAddDigital = false" />
           </v-window-item>
-          <v-window-item value="digital_orders">
-            <DigitalOrderAdmin />
-          </v-window-item>
         </v-window>
 
         <!-- Mobile FAB for Add -->
@@ -157,8 +150,7 @@
           color="primary"
           icon="mdi-plus"
           size="large"
-          class="d-sm-none fab-btn"
-          elevation="8"
+          class="d-sm-none fab-btn ds-btn--primary"
           position="fixed"
           style="bottom: 24px; right: 24px; z-index: 100;"
           @click="triggerAdd"
@@ -178,7 +170,6 @@ import AdminOverview from './AdminOverview.vue'
 import ProductManagement from './ProductManagement.vue'
 import OrderManagement from './OrderManagement.vue'
 import DigitalProductAdmin from './DigitalProductAdmin.vue'
-import DigitalOrderAdmin from './DigitalOrderAdmin.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -213,7 +204,6 @@ watch(() => route.path, (path) => {
   if (path === '/admin/products') activeTab.value = 'products'
   else if (path === '/admin/orders') activeTab.value = 'orders'
   else if (path === '/admin/digital') activeTab.value = 'digital'
-  else if (path === '/admin/digital-orders') activeTab.value = 'digital_orders'
   else activeTab.value = 'dashboard'
 }, { immediate: true })
 </script>

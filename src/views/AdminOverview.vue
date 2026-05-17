@@ -3,7 +3,7 @@
     <!-- Live Stats Cards -->
     <v-row class="mb-10">
       <v-col cols="12" sm="6" md="3">
-        <v-card class="stats-card pa-6 rounded-xl border-thin bg-white shadow-sm overflow-hidden">
+        <v-card class="stats-card pa-6 ds-surface-card overflow-hidden">
           <div class="d-flex align-center justify-space-between relative">
             <div>
               <div class="text-overline text-grey-darken-1 mb-1">Total Products</div>
@@ -19,7 +19,7 @@
       </v-col>
 
       <v-col cols="12" sm="6" md="3">
-        <v-card class="stats-card pa-6 rounded-xl border-thin bg-white shadow-sm overflow-hidden">
+        <v-card class="stats-card pa-6 ds-surface-card overflow-hidden">
           <div class="d-flex align-center justify-space-between relative">
             <div>
               <div class="text-overline text-grey-darken-1 mb-1">Active Products</div>
@@ -35,7 +35,7 @@
       </v-col>
 
       <v-col cols="12" sm="6" md="3">
-        <v-card class="stats-card pa-6 rounded-xl border-thin bg-white shadow-sm overflow-hidden">
+        <v-card class="stats-card pa-6 ds-surface-card overflow-hidden">
           <div class="d-flex align-center justify-space-between relative">
             <div>
               <div class="text-overline text-grey-darken-1 mb-1">Total Orders</div>
@@ -51,7 +51,7 @@
       </v-col>
 
       <v-col cols="12" sm="6" md="3">
-        <v-card class="stats-card pa-6 rounded-xl border-thin bg-white shadow-sm overflow-hidden">
+        <v-card class="stats-card pa-6 ds-surface-card overflow-hidden">
           <div class="d-flex align-center justify-space-between relative">
             <div>
               <div class="text-overline text-grey-darken-1 mb-1">Revenue (Est.)</div>
@@ -69,7 +69,7 @@
 
     <!-- Recent Activity -->
     <div class="luxury-font text-overline text-grey-darken-1 mb-4 font-weight-bold">RECENT ACTIVITY</div>
-    <v-card class="rounded-xl border-thin shadow-sm">
+    <v-card class="ds-surface-card">
       <v-list class="pa-0">
         <v-list-item v-for="order in recentOrders" :key="order.id" class="px-6 py-4 border-b">
           <template v-slot:prepend>

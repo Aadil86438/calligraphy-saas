@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="pa-0">
     <!-- Search Bar -->
-    <v-card class="pa-4 mb-6 d-flex flex-wrap align-center gap-4 border-thin shadow-sm">
+    <v-card class="pa-4 mb-6 d-flex flex-wrap align-center gap-4 ds-surface-card">
       <v-text-field
         v-model="searchQuery"
         prepend-inner-icon="mdi-magnify"
@@ -14,18 +14,17 @@
     </v-card>
 
     <!-- Products Table -->
-    <v-card class="border-thin shadow-sm overflow-hidden" :loading="loading">
+    <v-card class="ds-surface-card overflow-hidden" :loading="loading">
       <div v-if="loading" class="pa-16 text-center">
         <v-progress-circular indeterminate color="primary"></v-progress-circular>
       </div>
       <div v-else class="overflow-x-auto">
-        <v-table hover class="digital-table">
+        <v-table hover class="digital-table ds-table">
           <thead class="bg-grey-lighten-4">
             <tr>
               <th style="width: 60px">PREVIEW</th>
               <th>TITLE</th>
               <th style="width: 100px">PRICE</th>
-              <th style="width: 120px">PDF</th>
               <th style="width: 100px">STATUS</th>
               <th style="width: 110px">ACTIONS</th>
             </tr>
@@ -48,12 +47,6 @@
                 </div>
               </td>
               <td class="font-weight-bold">{{ CONFIG.CURRENCY_SYMBOL }}{{ product.price }}</td>
-              <td>
-                <v-chip size="small" :color="product.original_pdf_path ? 'success' : 'error'" variant="tonal">
-                  <v-icon start size="14">{{ product.original_pdf_path ? 'mdi-check-circle' : 'mdi-alert' }}</v-icon>
-                  {{ product.original_pdf_path ? 'Uploaded' : 'Missing' }}
-                </v-chip>
-              </td>
               <td>
                 <v-switch
                   :model-value="product.is_active"
@@ -80,9 +73,9 @@
     </v-card>
 
     <!-- Add/Edit Dialog -->
-    <v-dialog v-model="dialog" max-width="700" persistent scrollable>
-      <v-card class="rounded-xl">
-        <v-toolbar flat class="border-b">
+    <v-dialog v-model="dialog" max-width="700" persistent scrollable content-class="ds-dialog">
+      <v-card class="ds-surface-card safe-flex-column" style="max-height: 90vh;">
+        <v-toolbar flat class="border-b flex-shrink-0">
           <v-toolbar-title class="luxury-font font-weight-bold">
             {{ isEditing ? 'Edit Digital Product' : 'Add Digital Product' }}
           </v-toolbar-title>
@@ -90,7 +83,7 @@
           <v-btn icon="mdi-close" variant="text" @click="dialog = false"></v-btn>
         </v-toolbar>
 
-        <v-card-text class="pa-6">
+        <v-card-text class="pa-6 safe-flex-scroll">
           <v-form ref="productForm" v-model="formValid">
             <v-text-field
               v-model="editedItem.title"
@@ -134,25 +127,10 @@
               <input ref="previewInput" type="file" accept="image/*" hidden @change="handlePreviewSelect" />
             </div>
 
-            <!-- PDF Upload -->
-            <div class="mb-4">
-              <div class="text-overline text-grey mb-2">ORIGINAL PDF (private — customers download this)</div>
-              <v-chip v-if="editedItem.original_pdf_path || selectedPdf" color="success" variant="tonal" class="mb-3">
-                <v-icon start>mdi-file-pdf-box</v-icon>
-                {{ selectedPdf ? selectedPdf.name : 'PDF uploaded' }}
-              </v-chip>
-              <div v-if="!editedItem.original_pdf_path && !selectedPdf" class="text-caption text-error mb-2">
-                * PDF file is required
-              </div>
-              <v-btn variant="outlined" color="error" prepend-icon="mdi-file-pdf-box" @click="$refs.pdfInput.click()">
-                {{ editedItem.original_pdf_path ? 'Replace PDF' : 'Upload PDF' }}
-              </v-btn>
-              <input ref="pdfInput" type="file" accept=".pdf" hidden @change="handlePdfSelect" />
-            </div>
           </v-form>
         </v-card-text>
 
-        <v-card-actions class="pa-6 pt-0">
+        <v-card-actions class="pa-6 pt-0 flex-shrink-0 bg-surface">
           <v-spacer></v-spacer>
           <v-btn variant="text" @click="dialog = false">Cancel</v-btn>
           <v-btn
@@ -206,7 +184,6 @@ const loading = ref(true)
 const selectedItem = ref(null)
 const previewImagePreview = ref('')
 const selectedPreviewFile = ref(null)
-const selectedPdf = ref(null)
 const productForm = ref(null)
 const showMessage = inject('showMessage')
 
@@ -214,8 +191,7 @@ const editedItem = ref({
   title: '',
   price: '',
   description: '',
-  preview_image_url: '',
-  original_pdf_path: ''
+  preview_image_url: ''
 })
 
 // Watch for external trigger
@@ -247,7 +223,6 @@ const fetchProducts = () => {
 const openDialog = (item = null) => {
   previewImagePreview.value = ''
   selectedPreviewFile.value = null
-  selectedPdf.value = null
   if (item) {
     isEditing.value = true
     selectedItem.value = item
@@ -255,7 +230,7 @@ const openDialog = (item = null) => {
   } else {
     isEditing.value = false
     selectedItem.value = null
-    editedItem.value = { title: '', price: '', description: '', preview_image_url: '', original_pdf_path: '' }
+    editedItem.value = { title: '', price: '', description: '', preview_image_url: '' }
   }
   dialog.value = true
 }
@@ -268,48 +243,29 @@ const handlePreviewSelect = (e) => {
   }
 }
 
-const handlePdfSelect = (e) => {
-  const file = e.target.files[0]
-  if (file) {
-    if (!file.name.endsWith('.pdf')) {
-      showMessage('Only PDF files are allowed', 'error')
-      return
-    }
-    selectedPdf.value = file
-  }
-}
-
 const saveProduct = async () => {
   const { valid } = await productForm.value.validate()
   if (!valid) return
 
-  // Require PDF for new products
-  if (!isEditing.value && !selectedPdf.value) {
-    showMessage('Please upload a PDF file', 'error')
-    return
-  }
+
 
   saveLoading.value = true
   try {
     let previewUrl = editedItem.value.preview_image_url
-    let pdfPath = editedItem.value.original_pdf_path
+
 
     // Upload preview image if selected
     if (selectedPreviewFile.value) {
       previewUrl = await DigitalProductService.uploadPreviewImage(selectedPreviewFile.value)
     }
 
-    // Upload PDF if selected
-    if (selectedPdf.value) {
-      pdfPath = await DigitalProductService.uploadOriginalPdf(selectedPdf.value)
-    }
+
 
     const payload = {
       title: editedItem.value.title,
       price: parseFloat(editedItem.value.price),
       description: editedItem.value.description,
-      preview_image_url: previewUrl,
-      original_pdf_path: pdfPath
+      preview_image_url: previewUrl
     }
 
     if (isEditing.value) {
